@@ -1,0 +1,32 @@
+name: repair_app
+description: "Home & Office Repair App – report issues, get matched with specialists, and track progress."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  lottie: ^2.2.0  
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/Logo.json
+    - assets/Logo.png
+
+  fonts:
+    - family: Lobster
+      fonts:
+        - asset: assets/Lobster-Regular.ttf
