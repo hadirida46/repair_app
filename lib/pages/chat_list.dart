@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'chat.dart';
+import 'chat.dart';
 import '/widgets/custom_appbar.dart';
 
 class ChatList extends StatelessWidget {
@@ -50,7 +50,7 @@ class ChatList extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -72,12 +72,12 @@ class ChatList extends StatelessWidget {
                     ),
                     subtitle: Text(user['lastMessage']!),
                     trailing: Text(user['time']!),
-                    // onTap: () {
-                    //   Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(builder: (_) => const Chat()),
-                    //   );
-                    // },
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const Chat()),
+                      );
+                    },
                   ),
                 );
               }, childCount: _users.length),

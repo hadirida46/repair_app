@@ -52,7 +52,7 @@ class _SignUpFormState extends State<SignUpForm> {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.grey[300],
+        color: Colors.grey[100],
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -191,9 +191,8 @@ class _SignUpFormState extends State<SignUpForm> {
                     ),
                     onPressed: _submit,
                     child: const Text(
-                      'Sign Up',
+                      'Next',
                       style: TextStyle(
-                        fontFamily: 'Lobster',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,

@@ -45,14 +45,14 @@ class _SignInFormState extends State<SignInForm> {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.grey[300],
+        color: Colors.grey[100],
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
             spreadRadius: 2,
             blurRadius: 10,
-            offset: const Offset(0, 4), 
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -130,9 +130,8 @@ class _SignInFormState extends State<SignInForm> {
                     ),
                     onPressed: _submit,
                     child: Text(
-                      'Sign In',
+                      'Next',
                       style: TextStyle(
-                        fontFamily: 'Lobster',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,

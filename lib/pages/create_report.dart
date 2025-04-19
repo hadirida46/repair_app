@@ -6,7 +6,6 @@ import '../widgets/custom_text_field.dart';
 import '../widgets/multiline_text_field.dart';
 
 const primaryOrange = Color(0xFFFF9800);
-const primaryGreen = Color(0xFF4CAF50);
 const deleteIconColor = Color(0xFFB71C1C);
 
 class CreateReport extends StatefulWidget {
@@ -83,7 +82,7 @@ class _CreateReportState extends State<CreateReport> {
             padding: const EdgeInsets.all(20),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
@@ -174,7 +173,7 @@ class _CreateReportState extends State<CreateReport> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            width: 160,
+                            width: 150,
                             height: 30,
                             decoration: BoxDecoration(
                               boxShadow: [
@@ -246,7 +245,7 @@ class _CreateReportState extends State<CreateReport> {
                         child: ElevatedButton(
                           onPressed: _submitReport,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryGreen,
+                            backgroundColor: Colors.indigo[900],
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
@@ -254,7 +253,7 @@ class _CreateReportState extends State<CreateReport> {
                             ),
                           ),
                           child: const Text(
-                            '\tSubmit for AI-Matching\t',
+                            '\t\tSearch for Specialist\t\t',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
