@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '/widgets/custom_text_field.dart';
 import '/pages/sign_up.dart';
+import '/pages/main_page.dart'; // Added this import
 
 class SignInForm extends StatefulWidget {
   const SignInForm({super.key});
@@ -26,6 +27,14 @@ class _SignInFormState extends State<SignInForm> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Signing in...')));
+
+      // Navigate to MainPage after a short delay
+      Future.delayed(const Duration(seconds: 1), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainPage()),
+        );
+      });
     }
   }
 
@@ -104,7 +113,7 @@ class _SignInFormState extends State<SignInForm> {
                               : null,
                 ),
                 const SizedBox(height: 24),
-                // Button at the bottom
+                // Sign In Button
                 Align(
                   alignment: Alignment.center,
                   child: ElevatedButton(

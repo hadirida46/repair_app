@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/pages/sign_in.dart';
+import '/pages/main_page.dart';
 import '/widgets/custom_text_field.dart';
 import '/widgets/user_specialist_toggle.dart';
 
@@ -33,6 +34,14 @@ class _SignUpFormState extends State<SignUpForm> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Signing up as $selectedRole...')));
+
+      // Navigate to MainPage after a short delay
+      Future.delayed(const Duration(seconds: 1), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainPage()),
+        );
+      });
     }
   }
 
