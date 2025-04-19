@@ -1,26 +1,77 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '/widgets/custom_appbar.dart';
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CustomAppBar({super.key});
+class Home extends StatefulWidget {
+  const Home({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.indigo[900],
-      elevation: 0,
-      automaticallyImplyLeading: false,
-      title: const Text(
-        'Home',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      centerTitle: true,
-    );
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  final List<String> _images = [
+    'assets/plumbing.png',
+    'assets/electricity.png',
+    'assets/architecture.png',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    Timer.periodic(const Duration(seconds: 2), (Timer timer) {
+      if (_currentPage < _images.length - 1) {
+        _currentPage++;
+      } else {
+        _currentPage = 0;
+      }
+      _pageController.animateToPage(
+        _currentPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+      );
+    });
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          // Using your custom app bar from /widgets/custom_appbar.dart
+          CustomAppBar(title: 'Home'),
+
+          // SliverList to hold the images and other widgets
+          SliverList(
+            delegate: SliverChildListDelegate([
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 200, // Adjust this size as needed
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: _images.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Image.asset(_images[index], fit: BoxFit.cover),
+                    );
+                  },
+                ),
+              ),
+              // You can add more widgets below for a scrollable view
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
 }

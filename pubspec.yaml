@@ -25,6 +25,9 @@ flutter:
   assets:
     - assets/Logo.json
     - assets/Logo.png
+    - assets/plumbing.png
+    - assets/electricity.png
+    - assets/architecture.png
 
   fonts:
     - family: Lobster
