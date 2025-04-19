@@ -47,15 +47,13 @@ class _HomeState extends State<Home> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Using your custom app bar from /widgets/custom_appbar.dart
           CustomAppBar(title: 'Home'),
 
-          // SliverList to hold the images and other widgets
           SliverList(
             delegate: SliverChildListDelegate([
               const SizedBox(height: 16),
               SizedBox(
-                height: 200, // Adjust this size as needed
+                height: 200,
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: _images.length,
@@ -67,7 +65,6 @@ class _HomeState extends State<Home> {
                   },
                 ),
               ),
-              // You can add more widgets below for a scrollable view
             ]),
           ),
         ],

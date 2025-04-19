@@ -11,6 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  image_picker: ^0.8.5+3
   cupertino_icons: ^1.0.8
   lottie: ^2.2.0  
   
@@ -21,14 +22,12 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
   assets:
     - assets/Logo.json
     - assets/Logo.png
     - assets/plumbing.png
     - assets/electricity.png
     - assets/architecture.png
-
   fonts:
     - family: Lobster
       fonts:
