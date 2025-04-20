@@ -65,7 +65,6 @@ class _SignInFormState extends State<SignInForm> {
             style: TextStyle(
               fontFamily: 'Lobster',
               fontSize: 30,
-              fontWeight: FontWeight.bold,
               color: primaryOrange,
             ),
             textAlign: TextAlign.center,

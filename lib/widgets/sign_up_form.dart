@@ -86,7 +86,6 @@ class _SignUpFormState extends State<SignUpForm> {
             style: TextStyle(
               fontFamily: 'Lobster',
               fontSize: 30,
-              fontWeight: FontWeight.bold,
               color: primaryOrange,
             ),
             textAlign: TextAlign.center,
