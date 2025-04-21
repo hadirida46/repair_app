@@ -30,6 +30,7 @@ class BottomNavBar extends StatelessWidget {
           label: 'Create',
         ),
         BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
     );
   }

@@ -37,25 +37,22 @@ class ExpertCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
+          Center(
+            child: GestureDetector(
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const Chat()),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                backgroundColor: primaryOrange,
-                foregroundColor: Colors.white,
-                textStyle: const TextStyle(fontSize: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+              child: Text(
+                'Chat',
+                style: TextStyle(
+                  color: primaryOrange,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              child: const Text('Chat'),
             ),
           ),
         ],

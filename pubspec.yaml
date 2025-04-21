@@ -28,6 +28,7 @@ flutter:
     - assets/plumbing.png
     - assets/electricity.png
     - assets/architecture.png
+    - assets/profile_pic.png
   fonts:
     - family: Lobster
       fonts:

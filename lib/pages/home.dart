@@ -229,51 +229,60 @@ class _HomeState extends State<Home> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 16.0,
-                          runSpacing: 16.0,
-                          children: const [
-                            ExpertCard(
-                              imagePath: 'assets/plumbing.png',
-                              name: 'Ahmad',
-                              job: 'Plumber',
+                        SingleChildScrollView(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                runAlignment: WrapAlignment.center,
+                                spacing: 16.0,
+                                runSpacing: 16.0,
+                                children: const [
+                                  ExpertCard(
+                                    imagePath: 'assets/profile_pic.png',
+                                    name: 'Ahmad',
+                                    job: 'Plumber',
+                                  ),
+                                  ExpertCard(
+                                    imagePath: 'assets/profile_pic.png',
+                                    name: 'Sara',
+                                    job: 'Electrician',
+                                  ),
+                                  ExpertCard(
+                                    imagePath: 'assets/profile_pic.png',
+                                    name: 'Jad',
+                                    job: 'Engineer',
+                                  ),
+                                  ExpertCard(
+                                    imagePath: 'assets/profile_pic.png',
+                                    name: 'Layla',
+                                    job: 'Architect',
+                                  ),
+                                  ExpertCard(
+                                    imagePath: 'assets/profile_pic.png',
+                                    name: 'Omar',
+                                    job: 'Plumber',
+                                  ),
+                                  ExpertCard(
+                                    imagePath: 'assets/profile_pic.png',
+                                    name: 'Nadia',
+                                    job: 'Electrician',
+                                  ),
+                                  ExpertCard(
+                                    imagePath: 'assets/profile_pic.png',
+                                    name: 'Nadia',
+                                    job: 'Electrician',
+                                  ),
+                                  ExpertCard(
+                                    imagePath: 'assets/profile_pic.png',
+                                    name: 'Nadia ali mahmoud',
+                                    job: 'Electrician',
+                                  ),
+                                ],
+                              ),
                             ),
-                            ExpertCard(
-                              imagePath: 'assets/electricity.png',
-                              name: 'Sara',
-                              job: 'Electrician',
-                            ),
-                            ExpertCard(
-                              imagePath: 'assets/architecture.png',
-                              name: 'Jad',
-                              job: 'Engineer',
-                            ),
-                            ExpertCard(
-                              imagePath: 'assets/architecture.png',
-                              name: 'Layla',
-                              job: 'Architect',
-                            ),
-                            ExpertCard(
-                              imagePath: 'assets/plumbing.png',
-                              name: 'Omar',
-                              job: 'Plumber',
-                            ),
-                            ExpertCard(
-                              imagePath: 'assets/electricity.png',
-                              name: 'Nadia',
-                              job: 'Electrician',
-                            ),
-                            ExpertCard(
-                              imagePath: 'assets/electricity.png',
-                              name: 'Nadia',
-                              job: 'Electrician',
-                            ),
-                            ExpertCard(
-                              imagePath: 'assets/electricity.png',
-                              name: 'Nadia ali mahmoud',
-                              job: 'Electrician',
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
