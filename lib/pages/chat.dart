@@ -58,7 +58,7 @@ class _ChatState extends State<Chat> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.indigo[900], 
+                color: Colors.indigo[900],
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Row(

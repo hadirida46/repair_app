@@ -10,7 +10,7 @@ class MyReports extends StatefulWidget {
 }
 
 class _MyReportsState extends State<MyReports> {
-  final Color primaryOrange = const Color(0xFFFFA726);
+  static const Color primaryOrange = const Color(0xFFFFA726);
 
   final List<Map<String, String>> _reports = [
     // Dummy data
@@ -21,34 +21,35 @@ class _MyReportsState extends State<MyReports> {
       'description': 'A window in the living room is broken.',
     },
     {
-      'title': 'Broken Window',
-      'date': '2024-07-20',
+      'title': 'Leaking Sink',
+      'date': '2024-07-21',
       'status': 'Accepted',
-      'description': 'A window in the living room is broken.',
+      'description': 'The kitchen sink is leaking water.',
     },
     {
-      'title': 'Broken Window',
-      'date': '2024-07-20',
+      'title': 'Electrical Shortage',
+      'date': '2024-07-22',
       'status': 'Completed',
-      'description': 'A window in the living room is broken.',
+      'description': 'There’s an electrical shortage in the office.',
     },
     {
-      'title': 'Broken Window',
-      'date': '2024-07-20',
+      'title': 'Cracked Wall',
+      'date': '2024-07-23',
       'status': 'Rejected',
-      'description': 'A window in the living room is broken.',
+      'description': 'A crack in the wall needs repair.',
     },
     {
-      'title': 'Broken Window',
-      'date': '2024-07-20',
+      'title': 'Roof Damage',
+      'date': '2024-07-24',
       'status': 'Escalated',
-      'description': 'A window in the living room is broken.',
+      'description':
+          'There’s significant roof damage that needs urgent repair.',
     },
     {
-      'title': 'Broken Window',
-      'date': '2024-07-20',
+      'title': 'Clogged Drain',
+      'date': '2024-07-25',
       'status': 'In Progress',
-      'description': 'A window in the living room is broken.',
+      'description': 'The bathroom drain is clogged and needs attention.',
     },
   ];
 
@@ -69,7 +70,10 @@ class _MyReportsState extends State<MyReports> {
                         child: Center(
                           child: Text(
                             "No reports yet",
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: primaryOrange,
+                            ),
                           ),
                         ),
                       ),
@@ -96,7 +100,7 @@ class _MyReportsState extends State<MyReports> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                report['title'] ?? '',
+                                report['title'] ?? 'No Title',
                                 style: TextStyle(
                                   fontSize: 25,
                                   fontWeight: FontWeight.bold,
@@ -106,7 +110,7 @@ class _MyReportsState extends State<MyReports> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Date: ${report['date'] ?? ''}',
+                                'Date: ${report['date'] ?? 'No Date'}',
                                 style: const TextStyle(
                                   fontStyle: FontStyle.italic,
                                 ),
@@ -119,12 +123,14 @@ class _MyReportsState extends State<MyReports> {
                                       fontStyle: FontStyle.italic,
                                     ),
                                   ),
-                                  ReportStatus(status: report['status'] ?? ''),
+                                  ReportStatus(
+                                    status: report['status'] ?? 'Unknown',
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Description: ${report['description'] ?? ''}',
+                                'Description: ${report['description'] ?? 'No Description'}',
                                 style: const TextStyle(
                                   fontStyle: FontStyle.italic,
                                 ),

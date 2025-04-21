@@ -17,6 +17,10 @@ class _HomeState extends State<Home> {
   int _currentPage = 0;
   Timer? _timer;
 
+  final PageController _testimonialController = PageController();
+  int _currentTestimonial = 0;
+  Timer? _testimonialTimer;
+
   final List<Map<String, String>> _reports = [
     {
       'image': 'assets/plumbing.png',
@@ -35,10 +39,28 @@ class _HomeState extends State<Home> {
     },
   ];
 
+  final List<Map<String, String>> _testimonials = [
+    {
+      'quote':
+          '“Jad fixed my office wall in no time. Super professional and polite.”',
+      'author': '- Rana K.',
+    },
+    {
+      'quote': '“Booking a plumber was so easy! Got help the same day.”',
+      'author': '- Ali H.',
+    },
+    {
+      'quote':
+          '“Really impressed by how fast the electrician arrived and fixed our lights.”',
+      'author': '- Mira S.',
+    },
+  ];
+
   @override
   void initState() {
     super.initState();
     _startAutoScroll();
+    _startTestimonialScroll();
   }
 
   void _startAutoScroll() {
@@ -56,10 +78,38 @@ class _HomeState extends State<Home> {
     });
   }
 
+  void _startTestimonialScroll() {
+    _testimonialTimer = Timer.periodic(const Duration(seconds: 6), (
+      Timer timer,
+    ) {
+      if (_testimonialController.hasClients) {
+        setState(() {
+          _currentTestimonial =
+              (_currentTestimonial + 1) % _testimonials.length;
+        });
+        _testimonialController.animateToPage(
+          _currentTestimonial,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _currentPage = index;
+    });
+    _timer?.cancel();
+    _startAutoScroll();
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
+    _testimonialController.dispose();
     _timer?.cancel();
+    _testimonialTimer?.cancel();
     super.dispose();
   }
 
@@ -79,13 +129,13 @@ class _HomeState extends State<Home> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withOpacity(0.2),
                           spreadRadius: 1,
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -121,6 +171,7 @@ class _HomeState extends State<Home> {
                           child: PageView.builder(
                             controller: _pageController,
                             itemCount: _reports.length,
+                            onPageChanged: _onPageChanged,
                             itemBuilder: (context, index) {
                               final report = _reports[index];
                               return Padding(
@@ -192,36 +243,51 @@ class _HomeState extends State<Home> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.all(15),
-                          decoration: BoxDecoration(
-                            color: Colors.orange[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: primaryOrange.withOpacity(0.4),
-                            ),
-                          ),
-                          child: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "“Jad fixed my office wall in no time. Super professional and polite.”",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontStyle: FontStyle.italic,
+                        SizedBox(
+                          height: 100,
+                          child: PageView.builder(
+                            controller: _testimonialController,
+                            itemCount: _testimonials.length,
+                            itemBuilder: (context, index) {
+                              final testimonial = _testimonials[index];
+                              return Container(
+                                padding: const EdgeInsets.all(15),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 8,
                                 ),
-                              ),
-                              SizedBox(height: 6),
-                              Text(
-                                "- Rana K.",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                                decoration: BoxDecoration(
+                                  color: Colors.orange[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: primaryOrange.withOpacity(0.4),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      testimonial['quote']!,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      testimonial['author']!,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(height: 30),
                         Text(
-                          "Nearby Experts",
+                          "Nearby Experts 📍",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -229,60 +295,54 @@ class _HomeState extends State<Home> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        SingleChildScrollView(
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Wrap(
-                                alignment: WrapAlignment.center,
-                                runAlignment: WrapAlignment.center,
-                                spacing: 16.0,
-                                runSpacing: 16.0,
-                                children: const [
-                                  ExpertCard(
-                                    imagePath: 'assets/profile_pic.png',
-                                    name: 'Ahmad',
-                                    job: 'Plumber',
-                                  ),
-                                  ExpertCard(
-                                    imagePath: 'assets/profile_pic.png',
-                                    name: 'Sara',
-                                    job: 'Electrician',
-                                  ),
-                                  ExpertCard(
-                                    imagePath: 'assets/profile_pic.png',
-                                    name: 'Jad',
-                                    job: 'Engineer',
-                                  ),
-                                  ExpertCard(
-                                    imagePath: 'assets/profile_pic.png',
-                                    name: 'Layla',
-                                    job: 'Architect',
-                                  ),
-                                  ExpertCard(
-                                    imagePath: 'assets/profile_pic.png',
-                                    name: 'Omar',
-                                    job: 'Plumber',
-                                  ),
-                                  ExpertCard(
-                                    imagePath: 'assets/profile_pic.png',
-                                    name: 'Nadia',
-                                    job: 'Electrician',
-                                  ),
-                                  ExpertCard(
-                                    imagePath: 'assets/profile_pic.png',
-                                    name: 'Nadia',
-                                    job: 'Electrician',
-                                  ),
-                                  ExpertCard(
-                                    imagePath: 'assets/profile_pic.png',
-                                    name: 'Nadia ali mahmoud',
-                                    job: 'Electrician',
-                                  ),
+                        Stack(
+                          children: [
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  for (var expert in [
+                                    {'name': 'Ahmad', 'job': 'Plumber'},
+                                    {'name': 'Sara', 'job': 'Electrician'},
+                                    {'name': 'Jad', 'job': 'Engineer'},
+                                    {'name': 'Layla', 'job': 'Architect'},
+                                    {'name': 'Omar', 'job': 'Plumber'},
+                                    {'name': 'Nadia', 'job': 'Electrician'},
+                                  ])
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0,
+                                      ),
+                                      child: ExpertCard(
+                                        imagePath: 'assets/profile_pic.png',
+                                        name: expert['name']!,
+                                        job: expert['job']!,
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
-                          ),
+                            Positioned(
+                              right: 0,
+                              top: 10,
+                              child: GestureDetector(
+                                onTap: () {
+                                  // Scroll action could be added here if needed
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(8.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  child: Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: primaryOrange,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

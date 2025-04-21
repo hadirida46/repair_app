@@ -16,7 +16,6 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  // Updated list of pages to match the new bottom nav order
   final List<Widget> _pages = [
     const Home(),
     const MyReports(),
@@ -28,13 +27,13 @@ class _MainPageState extends State<MainPage> {
   void _onNavTapped(int index) {
     setState(() {
       _selectedIndex = index;
-    }); 
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex], // Display the selected page
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavBar(
         currentIndex: _selectedIndex,
         onTap: _onNavTapped,
