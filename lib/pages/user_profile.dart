@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:repair_app/widgets/expert_card.dart';
 import 'dart:io';
 import '../widgets/custom_text_field.dart';
+import 'package:repair_app/pages/splash_screen.dart';
+
+const Color primaryOrange = Color(0xFFFF9800);
 
 class UserProfile extends StatefulWidget {
   const UserProfile({Key? key}) : super(key: key);
@@ -13,8 +15,14 @@ class UserProfile extends StatefulWidget {
 
 class _UserProfileState extends State<UserProfile> {
   XFile? _image;
-  final TextEditingController _nameController = TextEditingController(
-    text: 'John Doe',
+
+  final _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _firstNameController = TextEditingController(
+    text: 'John',
+  );
+  final TextEditingController _lastNameController = TextEditingController(
+    text: 'Doe',
   );
   final TextEditingController _emailController = TextEditingController(
     text: 'johndoe@example.com',
@@ -23,7 +31,6 @@ class _UserProfileState extends State<UserProfile> {
     text: 'Default Location',
   );
 
-  // Function to pick an image from the gallery
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(
@@ -35,38 +42,53 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
-  // Show dialog for deleting account
-  void _showDeleteDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Delete Account'),
-            content: const Text(
-              'Are you sure you want to delete your account? This action cannot be undone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  debugPrint('Account deletion initiated.');
-                },
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
+  void _showRedSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 
-  // Show dialog for changing password
+  void _showGreenSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_outline, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  bool _validatePassword(String password) {
+    final hasMinLength = password.length >= 8;
+    final hasUppercase = RegExp(r'[A-Z]').hasMatch(password);
+    final hasNumber = RegExp(r'\d').hasMatch(password);
+    return password.isNotEmpty && hasMinLength && hasUppercase && hasNumber;
+  }
+
   void _showChangePasswordDialog(BuildContext context) {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
 
     showDialog(
       context: context,
@@ -93,6 +115,15 @@ class _UserProfileState extends State<UserProfile> {
                     prefixIcon: Icon(Icons.lock),
                   ),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm New Password',
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                ),
               ],
             ),
             actions: [
@@ -104,21 +135,65 @@ class _UserProfileState extends State<UserProfile> {
                 onPressed: () {
                   final current = currentPasswordController.text.trim();
                   final newPass = newPasswordController.text.trim();
+                  final confirmPass = confirmPasswordController.text.trim();
 
-                  if (current.isEmpty || newPass.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please fill in both fields.'),
-                      ),
+                  if (current.isEmpty ||
+                      newPass.isEmpty ||
+                      confirmPass.isEmpty) {
+                    _showRedSnackBar('All password fields must be filled.');
+                    return;
+                  }
+
+                  if (!_validatePassword(newPass)) {
+                    _showRedSnackBar(
+                      'Password must be at least 8 characters,\ninclude a number and an uppercase letter.',
+                    );
+                    return;
+                  }
+
+                  if (newPass != confirmPass) {
+                    _showRedSnackBar(
+                      'New password and confirmation do not match.',
                     );
                     return;
                   }
 
                   Navigator.pop(ctx);
-                  debugPrint('Password changed from "$current" to "$newPass"');
-                  // Implement password change logic here
+                  debugPrint('Password change requested: $current → $newPass');
                 },
                 child: const Text('Confirm'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Delete Account'),
+            content: const Text(
+              'Are you sure you want to delete your account? This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  debugPrint('Account deletion initiated.');
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => SplashScreen()),
+                    (route) => false,
+                  );
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
               ),
             ],
           ),
@@ -130,114 +205,142 @@ class _UserProfileState extends State<UserProfile> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
-        backgroundColor: Colors.indigo.shade900,
+        backgroundColor: Colors.indigo[900],
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundImage:
-                      _image != null
-                          ? FileImage(File(_image!.path))
-                          : const AssetImage('assets/profile_pic.png')
-                              as ImageProvider,
-                ),
-                Positioned(
-                  child: IconButton(
-                    icon: const Icon(Icons.add_circle, color: Colors.orange),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundImage:
+                        _image != null
+                            ? FileImage(File(_image!.path))
+                            : const AssetImage('assets/profile_pic.png')
+                                as ImageProvider,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle, color: primaryOrange),
                     onPressed: _pickImage,
                   ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomTextField(
+                      controller: _firstNameController,
+                      label: 'First Name',
+                      icon: Icons.person,
+                      validator:
+                          (value) =>
+                              (value == null || value.isEmpty)
+                                  ? 'Enter your first name'
+                                  : null,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: CustomTextField(
+                      controller: _lastNameController,
+                      label: 'Last Name',
+                      icon: Icons.person_outline,
+                      validator:
+                          (value) =>
+                              (value == null || value.isEmpty)
+                                  ? 'Enter your last name'
+                                  : null,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _emailController,
+                label: 'Email',
+                icon: Icons.email,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Enter your email';
+                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                  if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _locationController,
+                label: 'Location',
+                icon: Icons.location_on,
+                validator:
+                    (value) =>
+                        (value == null || value.isEmpty)
+                            ? 'Enter your location'
+                            : null,
+              ),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: const Icon(Icons.lock),
+                title: const Text('Change Password'),
+                onTap: () => _showChangePasswordDialog(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Logout'),
+                onTap: () {
+                  debugPrint('User logged out.');
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => SplashScreen()),
+                    (route) => false,
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text(
+                  'Delete Account',
+                  style: TextStyle(color: Colors.red),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: _nameController,
-              label: 'Full Name',
-              icon: Icons.person,
-              validator:
-                  (value) =>
-                      value == null || value.isEmpty
-                          ? 'Please enter a name'
-                          : null,
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: _emailController,
-              label: 'Email',
-              icon: Icons.email,
-              validator: (value) {
-                if (value == null || value.isEmpty)
-                  return 'Please enter an email';
-                if (!value.contains('@')) return 'Please enter a valid email';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: _locationController,
-              label: 'Location',
-              icon: Icons.location_on,
-              validator:
-                  (value) =>
-                      value == null || value.isEmpty
-                          ? 'Please enter a location'
-                          : null,
-            ),
-            const SizedBox(height: 24),
-
-            ListTile(
-              leading: const Icon(Icons.lock),
-              title: const Text('Change Password'),
-              onTap: () => _showChangePasswordDialog(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () => debugPrint('Logout tapped'),
-            ),
-
-            const Divider(),
-
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text(
-                'Delete Account',
-                style: TextStyle(color: Colors.red),
+                onTap: () => _showDeleteDialog(context),
               ),
-              onTap: () => _showDeleteDialog(context),
-            ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    final first = _firstNameController.text.trim();
+                    final last = _lastNameController.text.trim();
+                    final email = _emailController.text.trim();
+                    final location = _locationController.text.trim();
 
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: () {
-                final name = _nameController.text.trim();
-                final email = _emailController.text.trim();
-                final location = _locationController.text.trim();
-                debugPrint('Name: $name');
-                debugPrint('Email: $email');
-                debugPrint('Location: $location');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryOrange,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                    debugPrint('First Name: $first');
+                    debugPrint('Last Name: $last');
+                    debugPrint('Email: $email');
+                    debugPrint('Location: $location');
+                    _showGreenSnackBar('Profile updated successfully!');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryOrange,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  '\t\tSave Changes\t\t',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ),
-              child: const Text(
-                '\t\tSave Changes\t\t',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

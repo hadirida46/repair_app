@@ -16,6 +16,8 @@ class CreateReport extends StatefulWidget {
 }
 
 class _CreateReportState extends State<CreateReport> {
+  bool _useDefaultLocation = false;
+  String _defaultLocation = "Beirut, Lebanon";
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -60,7 +62,7 @@ class _CreateReportState extends State<CreateReport> {
       debugPrint('Description: $description');
       debugPrint('Location: $location');
       debugPrint('Number of images selected: ${_selectedImages.length}');
-      // In a real app, you would send this data to your backend.
+      // Send this data to backend here
     }
   }
 
@@ -74,7 +76,7 @@ class _CreateReportState extends State<CreateReport> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true, // This is the key!
+      resizeToAvoidBottomInset: true,
       body: CustomScrollView(
         slivers: <Widget>[
           const CustomAppBar(title: 'Create Report'),
@@ -100,9 +102,7 @@ class _CreateReportState extends State<CreateReport> {
                   child: Form(
                     key: _formKey,
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .stretch, // Make children take full width
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: 20),
                         CustomTextField(
@@ -116,6 +116,7 @@ class _CreateReportState extends State<CreateReport> {
                                       : null,
                         ),
                         const SizedBox(height: 20),
+                        // Replace the TextField for description with CustomMultilineTextField
                         CustomMultilineTextField(
                           controller: _descriptionController,
                           label: 'Description',
@@ -126,7 +127,35 @@ class _CreateReportState extends State<CreateReport> {
                                       ? 'Please enter a description'
                                       : null,
                         ),
+
                         const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Use Default Location',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Switch(
+                              value: _useDefaultLocation,
+                              activeColor: primaryOrange,
+                              onChanged: (value) {
+                                setState(() {
+                                  _useDefaultLocation = value;
+                                  if (value) {
+                                    _locationController.text = _defaultLocation;
+                                  } else {
+                                    _locationController.clear();
+                                  }
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
                         CustomTextField(
                           controller: _locationController,
                           label: 'Location',
@@ -136,13 +165,12 @@ class _CreateReportState extends State<CreateReport> {
                                   value == null || value.isEmpty
                                       ? 'Please enter a location'
                                       : null,
+                          enabled: !_useDefaultLocation,//here
                         ),
                         const SizedBox(height: 30),
                         if (_selectedImages.isNotEmpty)
                           Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .stretch, // Align images to the left
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: List.generate(_selectedImages.length, (
                               index,
                             ) {
@@ -177,9 +205,7 @@ class _CreateReportState extends State<CreateReport> {
                             }),
                           ),
                         Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: 16.0,
-                          ), // Add some spacing below the image buttons
+                          padding: const EdgeInsets.only(bottom: 16.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

@@ -13,7 +13,8 @@ class SignUpForm extends StatefulWidget {
 
 class _SignUpFormState extends State<SignUpForm> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -22,11 +23,25 @@ class _SignUpFormState extends State<SignUpForm> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  String? validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your password';
+    } else if (value.length < 8) {
+      return 'Password must be at least 8 characters';
+    } else if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return 'Password must contain at least one uppercase letter';
+    } else if (!RegExp(r'[0-9]').hasMatch(value)) {
+      return 'Password must contain at least one number';
+    }
+    return null;
   }
 
   void _submit() {
@@ -35,7 +50,6 @@ class _SignUpFormState extends State<SignUpForm> {
         context,
       ).showSnackBar(SnackBar(content: Text('Signing up as $selectedRole...')));
 
-      // Navigate to MainPage after a short delay
       Future.delayed(const Duration(seconds: 1), () {
         Navigator.pushReplacement(
           context,
@@ -66,7 +80,6 @@ class _SignUpFormState extends State<SignUpForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Back Icon
           Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
@@ -80,7 +93,6 @@ class _SignUpFormState extends State<SignUpForm> {
               },
             ),
           ),
-          // Slogan
           Text(
             "Home or office,\nwe've got your back",
             style: TextStyle(
@@ -101,22 +113,38 @@ class _SignUpFormState extends State<SignUpForm> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
-
-          // Form
           Form(
             key: _formKey,
             child: Column(
               children: [
-                CustomTextField(
-                  controller: _nameController,
-                  label: 'Full Name',
-                  icon: Icons.person,
-                  textFieldHeight: 60.0,
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Please enter your name'
-                              : null,
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomTextField(
+                        controller: _firstNameController,
+                        label: 'First Name',
+                        icon: Icons.person,
+                        validator:
+                            (value) =>
+                                (value == null || value.isEmpty)
+                                    ? 'Enter your first name'
+                                    : null,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: CustomTextField(
+                        controller: _lastNameController,
+                        label: 'Last Name',
+                        icon: Icons.person_outline,
+                        validator:
+                            (value) =>
+                                (value == null || value.isEmpty)
+                                    ? 'Enter your last name'
+                                    : null,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(
@@ -128,7 +156,7 @@ class _SignUpFormState extends State<SignUpForm> {
                   validator:
                       (value) =>
                           value == null || value.isEmpty
-                              ? 'Please enter your email'
+                              ? 'Enter your email'
                               : null,
                 ),
                 const SizedBox(height: 16),
@@ -138,11 +166,7 @@ class _SignUpFormState extends State<SignUpForm> {
                   icon: Icons.lock,
                   isPassword: true,
                   textFieldHeight: 60.0,
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Please enter your password'
-                              : null,
+                  validator: validatePassword,
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(
@@ -161,8 +185,6 @@ class _SignUpFormState extends State<SignUpForm> {
                   },
                 ),
                 const SizedBox(height: 20),
-
-                // Toggle
                 UserSpecialistToggle(
                   initialValue: selectedRole,
                   onToggle: (role) {
@@ -172,8 +194,6 @@ class _SignUpFormState extends State<SignUpForm> {
                   },
                 ),
                 const SizedBox(height: 24),
-
-                // Sign Up Button
                 Align(
                   alignment: Alignment.center,
                   child: ElevatedButton(
@@ -205,11 +225,7 @@ class _SignUpFormState extends State<SignUpForm> {
                   children: [
                     const Text(
                       'Already have an account? ',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black,
-                      ),
+                      style: TextStyle(fontSize: 14),
                     ),
                     TextButton(
                       onPressed: () {
