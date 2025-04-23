@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '/pages/sign_in.dart';
 import '/pages/main_page.dart';
+import '/pages/s_main_page.dart';
 import '/widgets/custom_text_field.dart';
 import '/widgets/user_specialist_toggle.dart';
 
@@ -51,10 +52,21 @@ class _SignUpFormState extends State<SignUpForm> {
       ).showSnackBar(SnackBar(content: Text('Signing up as $selectedRole...')));
 
       Future.delayed(const Duration(seconds: 1), () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainPage()),
-        );
+        if (selectedRole == 'Specialist') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SpecialistMainPage(),
+            ), // Navigate to SpecialistMainPage
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MainPage(),
+            ), // Navigate to MainPage for regular users
+          );
+        }
       });
     }
   }
@@ -117,34 +129,28 @@ class _SignUpFormState extends State<SignUpForm> {
             key: _formKey,
             child: Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: CustomTextField(
-                        controller: _firstNameController,
-                        label: 'First Name',
-                        icon: Icons.person,
-                        validator:
-                            (value) =>
-                                (value == null || value.isEmpty)
-                                    ? 'Enter your first name'
-                                    : null,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: CustomTextField(
-                        controller: _lastNameController,
-                        label: 'Last Name',
-                        icon: Icons.person_outline,
-                        validator:
-                            (value) =>
-                                (value == null || value.isEmpty)
-                                    ? 'Enter your last name'
-                                    : null,
-                      ),
-                    ),
-                  ],
+                CustomTextField(
+                  controller: _firstNameController,
+                  label: 'First Name',
+                  icon: Icons.person,
+                  textFieldHeight: 60.0,
+                  validator:
+                      (value) =>
+                          (value == null || value.isEmpty)
+                              ? 'Enter your first name'
+                              : null,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _lastNameController,
+                  label: 'Last Name',
+                  icon: Icons.person_outline,
+                  textFieldHeight: 60.0,
+                  validator:
+                      (value) =>
+                          (value == null || value.isEmpty)
+                              ? 'Enter your last name'
+                              : null,
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(

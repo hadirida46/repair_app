@@ -5,14 +5,14 @@ import '/widgets/expert_card.dart';
 
 const Color primaryOrange = Color(0xFFFF9800);
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class SpecialistHome extends StatefulWidget {
+  const SpecialistHome({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  State<SpecialistHome> createState() => _SpecialistHomeState();
 }
 
-class _HomeState extends State<Home> {
+class _SpecialistHomeState extends State<SpecialistHome> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   Timer? _timer;
@@ -42,7 +42,7 @@ class _HomeState extends State<Home> {
   final List<Map<String, String>> _testimonials = [
     {
       'quote':
-          '“Jad fixed my office wall in no time. Super professional and polite.”',
+          'John fixed my office wall in no time. Super professional and polite.”',
       'author': '- Rana K.',
     },
     {
@@ -51,7 +51,7 @@ class _HomeState extends State<Home> {
     },
     {
       'quote':
-          '“Really impressed by how fast the electrician arrived and fixed our lights.”',
+          '“Really impressed by how fast John arrived and fixed our lights.”',
       'author': '- Mira S.',
     },
   ];
@@ -145,7 +145,7 @@ class _HomeState extends State<Home> {
                         const SizedBox(
                           width: double.infinity,
                           child: Text(
-                            "Home or office,\nwe've got your back",
+                            "Keep me busy,\nI’m built for it",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Lobster',
@@ -157,7 +157,7 @@ class _HomeState extends State<Home> {
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          "Got a problem at your home or office? Whether it’s a leak, a wiring issue, or something else — we’ve got your back. Just report the issue, snap a photo, and let our app connect you with trusted specialists in your area. From real-time chat to progress tracking, we make fixing things simple and stress-free.",
+                          "You're an expert in your field, trusted by those who rely on your skills. Every task you take on helps someone live or work better. Keep working with honesty, dedication, and pride — because real impact comes from doing good work, the right way.",
                           style: TextStyle(
                             fontSize: 15,
                             color: Colors.grey[800],
@@ -167,7 +167,7 @@ class _HomeState extends State<Home> {
                         ),
                         const SizedBox(height: 25),
                         Text(
-                          "Our Work",
+                          "My Work",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -244,7 +244,7 @@ class _HomeState extends State<Home> {
                         ),
                         const SizedBox(height: 30),
                         Text(
-                          "What our users say",
+                          "About Me",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -296,7 +296,7 @@ class _HomeState extends State<Home> {
                         ),
                         const SizedBox(height: 30),
                         Text(
-                          "Nearby Experts 📍",
+                          "Nearby Mates 📍",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -336,7 +336,7 @@ class _HomeState extends State<Home> {
                               top: 10,
                               child: GestureDetector(
                                 onTap: () {
-                                  // Scroll action could be added here if needed
+                                  // Add scroll logic if needed
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.all(8.0),
