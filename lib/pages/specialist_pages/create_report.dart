@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../widgets/custom_appbar.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/multiline_text_field.dart';
-import '../widgets/report_status.dart';
-import 'specialist_list.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_text_field.dart';
+import '../../widgets/multiline_text_field.dart';
+import '../../widgets/report_status.dart';
+import '../specialist_pages/specialist_list.dart';
+import '../specialist_pages/job_tracking.dart';
+import '../specialist_pages/feedback.dart';
 
 const primaryOrange = Color(0xFFFF9800);
 const deleteIconColor = Color(0xFFB71C1C);
@@ -35,10 +37,29 @@ class _SCreateReportState extends State<SCreateReport>
       'description': 'A window in the living room is broken.',
     },
     {
-      'title': 'Leaking Sink',
-      'date': '2024-07-21',
-      'status': 'Accepted',
-      'description': 'The kitchen sink is leaking water.',
+      'title': 'Electrical Shortage',
+      'date': '2024-07-22',
+      'status': 'Completed',
+      'description': 'There’s an electrical shortage in the office.',
+    },
+    {
+      'title': 'Cracked Wall',
+      'date': '2024-07-23',
+      'status': 'Rejected',
+      'description': 'A crack in the wall needs repair.',
+    },
+    {
+      'title': 'Roof Damage',
+      'date': '2024-07-24',
+      'status': 'Escalated',
+      'description':
+          'There’s significant roof damage that needs urgent repair.',
+    },
+    {
+      'title': 'Clogged Drain',
+      'date': '2024-07-25',
+      'status': 'In Progress',
+      'description': 'The bathroom drain is clogged and needs attention.',
     },
   ];
 
@@ -60,7 +81,6 @@ class _SCreateReportState extends State<SCreateReport>
 
   void _submitReport() {
     if (_formKey.currentState!.validate() && _selectedImages.isNotEmpty) {
-      // Submit logic here
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const SpecialistList()),
@@ -71,6 +91,27 @@ class _SCreateReportState extends State<SCreateReport>
           content: Text('Please fill all fields and add an image.'),
           backgroundColor: Colors.red,
         ),
+      );
+    }
+  }
+
+  void _handleReportNavigation(String status) {
+    if (status == 'In Progress') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const JobTrackingPage()),
+      );
+    } else if (status == 'Completed') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const FeedbackPage()),
+      );
+    } else if (status == 'Rejected' ||
+        status == 'Escalated' ||
+        status == 'Waiting For Confirmation') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SpecialistList()),
       );
     }
   }
@@ -241,7 +282,7 @@ class _SCreateReportState extends State<SCreateReport>
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: const Text(
-                              'Search for Specialist',
+                              '\t\tSearch for Specialist\t\t',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
@@ -266,42 +307,47 @@ class _SCreateReportState extends State<SCreateReport>
                         itemCount: _reports.length,
                         itemBuilder: (context, index) {
                           final report = _reports[index];
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  report['title']!,
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryOrange,
+                          return GestureDetector(
+                            onTap:
+                                () =>
+                                    _handleReportNavigation(report['status']!),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
                                   ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text('Date: ${report['date']}'),
-                                Row(
-                                  children: [
-                                    const Text('Status: '),
-                                    ReportStatus(status: report['status']!),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(report['description']!),
-                              ],
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    report['title']!,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryOrange,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text('Date: ${report['date']}'),
+                                  Row(
+                                    children: [
+                                      const Text('Status: '),
+                                      ReportStatus(status: report['status']!),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(report['description']!),
+                                ],
+                              ),
                             ),
                           );
                         },

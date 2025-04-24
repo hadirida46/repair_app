@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../widgets/custom_appbar.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/multiline_text_field.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_text_field.dart';
+import '../../widgets/multiline_text_field.dart';
 import 'specialist_list.dart';
 
 const primaryOrange = Color(0xFFFF9800);

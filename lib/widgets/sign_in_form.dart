@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '/widgets/custom_text_field.dart';
 import '/pages/sign_up.dart';
-import '/pages/main_page.dart'; 
+import '../pages/user_pages/main_page.dart'; 
 
 class SignInForm extends StatefulWidget {
   const SignInForm({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../widgets/custom_text_field.dart';
+import '../../widgets/custom_text_field.dart';
 import 'package:repair_app/pages/splash_screen.dart';
 
 const Color primaryOrange = Color(0xFFFF9800);

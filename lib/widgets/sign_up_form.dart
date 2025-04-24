@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '/pages/sign_in.dart';
-import '/pages/main_page.dart';
-import '/pages/s_main_page.dart';
+import '../pages/user_pages/main_page.dart';
+import '../pages/specialist_pages/main_page.dart';
 import '/widgets/custom_text_field.dart';
 import '/widgets/user_specialist_toggle.dart';
 
@@ -41,6 +41,17 @@ class _SignUpFormState extends State<SignUpForm> {
       return 'Password must contain at least one uppercase letter';
     } else if (!RegExp(r'[0-9]').hasMatch(value)) {
       return 'Password must contain at least one number';
+    }
+    return null;
+  }
+
+  String? validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Enter your email';
+    }
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Enter a valid email';
     }
     return null;
   }
@@ -160,10 +171,7 @@ class _SignUpFormState extends State<SignUpForm> {
                   keyboardType: TextInputType.emailAddress,
                   textFieldHeight: 60.0,
                   validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Enter your email'
-                              : null,
+                      validateEmail, // Use the new validateEmail function
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(

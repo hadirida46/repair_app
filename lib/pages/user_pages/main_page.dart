@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'home.dart';
 import 'my_reports.dart';
 import 'create_report.dart';
-import 'chat_list.dart';
+import '../chat_list.dart';
 import '/widgets/bottom_nav_bar.dart';
-import 'user_profile.dart';
+import 'profile.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
