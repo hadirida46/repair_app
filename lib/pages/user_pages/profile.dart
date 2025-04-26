@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/custom_appbar.dart';
 import 'package:repair_app/pages/splash_screen.dart';
 
 const Color primaryOrange = Color(0xFFFF9800);
@@ -203,144 +204,161 @@ class _UserProfileState extends State<UserProfile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        backgroundColor: Colors.indigo[900],
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage:
-                        _image != null
-                            ? FileImage(File(_image!.path))
-                            : const AssetImage('assets/profile_pic.png')
-                                as ImageProvider,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle, color: primaryOrange),
-                    onPressed: _pickImage,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _firstNameController,
-                      label: 'First Name',
-                      icon: Icons.person,
-                      validator:
-                          (value) =>
-                              (value == null || value.isEmpty)
-                                  ? 'Enter your first name'
-                                  : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _lastNameController,
-                      label: 'Last Name',
-                      icon: Icons.person_outline,
-                      validator:
-                          (value) =>
-                              (value == null || value.isEmpty)
-                                  ? 'Enter your last name'
-                                  : null,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _emailController,
-                label: 'Email',
-                icon: Icons.email,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter your email';
-                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                  if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _locationController,
-                label: 'Location',
-                icon: Icons.location_on,
-                validator:
-                    (value) =>
-                        (value == null || value.isEmpty)
-                            ? 'Enter your location'
-                            : null,
-              ),
-              const SizedBox(height: 24),
-              ListTile(
-                leading: const Icon(Icons.lock),
-                title: const Text('Change Password'),
-                onTap: () => _showChangePasswordDialog(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Logout'),
-                onTap: () {
-                  debugPrint('User logged out.');
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => SplashScreen()),
-                    (route) => false,
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text(
-                  'Delete Account',
-                  style: TextStyle(color: Colors.red),
-                ),
-                onTap: () => _showDeleteDialog(context),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    final first = _firstNameController.text.trim();
-                    final last = _lastNameController.text.trim();
-                    final email = _emailController.text.trim();
-                    final location = _locationController.text.trim();
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            const CustomAppBar(title: 'Profile'),
+            SliverPadding(
+              padding: const EdgeInsets.all(16.0),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundImage:
+                                  _image != null
+                                      ? FileImage(File(_image!.path))
+                                      : const AssetImage(
+                                            'assets/profile_pic.png',
+                                          )
+                                          as ImageProvider,
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.add_circle,
+                                color: primaryOrange,
+                              ),
+                              onPressed: _pickImage,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: CustomTextField(
+                                controller: _firstNameController,
+                                label: 'First Name',
+                                icon: Icons.person,
+                                validator:
+                                    (value) =>
+                                        value == null || value.isEmpty
+                                            ? 'Enter your first name'
+                                            : null,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: CustomTextField(
+                                controller: _lastNameController,
+                                label: 'Last Name',
+                                icon: Icons.person_outline,
+                                validator:
+                                    (value) =>
+                                        value == null || value.isEmpty
+                                            ? 'Enter your last name'
+                                            : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          controller: _emailController,
+                          label: 'Email',
+                          icon: Icons.email,
+                          validator: (value) {
+                            if (value == null || value.isEmpty)
+                              return 'Enter your email';
+                            final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                            if (!emailRegex.hasMatch(value))
+                              return 'Enter a valid email';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          controller: _locationController,
+                          label: 'Location',
+                          icon: Icons.location_on,
+                          validator:
+                              (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'Enter your location'
+                                      : null,
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState!.validate()) {
+                              final first = _firstNameController.text.trim();
+                              final last = _lastNameController.text.trim();
+                              final email = _emailController.text.trim();
+                              final location = _locationController.text.trim();
 
-                    debugPrint('First Name: $first');
-                    debugPrint('Last Name: $last');
-                    debugPrint('Email: $email');
-                    debugPrint('Location: $location');
-                    _showGreenSnackBar('Profile updated successfully!');
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryOrange,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                              debugPrint('First Name: $first');
+                              debugPrint('Last Name: $last');
+                              debugPrint('Email: $email');
+                              debugPrint('Location: $location');
+                              _showGreenSnackBar(
+                                'Profile updated successfully!',
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryOrange,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            '\t\tSave Changes\t\t',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+                        const Divider(),
+                        ListTile(
+                          leading: const Icon(Icons.lock),
+                          title: const Text('Change Password'),
+                          onTap: () => _showChangePasswordDialog(context),
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.logout),
+                          title: const Text('Logout'),
+                          onTap: () {
+                            debugPrint('User logged out.');
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (_) => SplashScreen()),
+                              (route) => false,
+                            );
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.delete, color: Colors.red),
+                          title: const Text(
+                            'Delete Account',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                          onTap: () => _showDeleteDialog(context),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                ),
-                child: const Text(
-                  '\t\tSave Changes\t\t',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
+                ]),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

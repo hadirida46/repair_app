@@ -54,9 +54,9 @@ class JobPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  _buildLabel('Handled by:'),
+                  _buildLabel('Reported By:'),
                   Text(
-                    job['handled_by'] ?? 'Unknown',
+                    job['reported_by'] ?? 'Unknown',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 16),
@@ -79,14 +79,28 @@ class JobPage extends StatelessWidget {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(height: 24),
-
+                  const SizedBox(height: 12),
+                  Center(
+                    child: _buildActionButton(
+                      icon: Icons.chat,
+                      label: 'Chat',
+                      color: primaryOrange,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const Chat()),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.pop(context); // Accept
+                          Navigator.pop(context);
                         },
                         icon: const Icon(Icons.check, color: Colors.white),
                         label: const Text(
@@ -106,7 +120,7 @@ class JobPage extends StatelessWidget {
                       ),
                       ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.pop(context); // Reject
+                          Navigator.pop(context);
                         },
                         icon: const Icon(Icons.close, color: Colors.white),
                         label: const Text(
@@ -132,29 +146,23 @@ class JobPage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const Chat()),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryOrange,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              'Chat',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      icon: Icon(icon, color: Colors.white),
+      label: Text(label, style: const TextStyle(color: Colors.white)),
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }

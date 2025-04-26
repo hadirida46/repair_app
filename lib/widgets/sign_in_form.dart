@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '/widgets/custom_text_field.dart';
 import '/pages/sign_up.dart';
-import '../pages/user_pages/main_page.dart'; 
+import '../pages/user_pages/main_page.dart';
 
 class SignInForm extends StatefulWidget {
   const SignInForm({super.key});
@@ -34,7 +34,7 @@ class _SignInFormState extends State<SignInForm> {
           MaterialPageRoute(builder: (context) => const MainPage()),
         );
       });
-    } 
+    }
   }
 
   @override
@@ -69,17 +69,6 @@ class _SignInFormState extends State<SignInForm> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
-          Text(
-            'Sign In',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: primaryOrange,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-
           // Form
           Form(
             key: _formKey,
@@ -111,7 +100,6 @@ class _SignInFormState extends State<SignInForm> {
                               : null,
                 ),
                 const SizedBox(height: 24),
-                // Sign In Button
                 Align(
                   alignment: Alignment.center,
                   child: ElevatedButton(
@@ -128,7 +116,7 @@ class _SignInFormState extends State<SignInForm> {
                     ),
                     onPressed: _submit,
                     child: Text(
-                      'Next',
+                      'Sign In',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

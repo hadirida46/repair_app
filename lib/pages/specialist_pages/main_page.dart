@@ -7,14 +7,16 @@ import 'profile.dart';
 import '/widgets/s_bottom_nav_bar.dart';
 
 class SpecialistMainPage extends StatefulWidget {
-  const SpecialistMainPage({Key? key}) : super(key: key);
+  final int initialIndex;
+
+  const SpecialistMainPage({Key? key, this.initialIndex = 0}) : super(key: key);
 
   @override
   State<SpecialistMainPage> createState() => _SpecialistMainPageState();
 }
 
 class _SpecialistMainPageState extends State<SpecialistMainPage> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   final List<Widget> _pages = [
     const SpecialistHome(),
@@ -23,6 +25,12 @@ class _SpecialistMainPageState extends State<SpecialistMainPage> {
     const ChatList(),
     const SpecialistProfile(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
 
   void _onNavTapped(int index) {
     setState(() {

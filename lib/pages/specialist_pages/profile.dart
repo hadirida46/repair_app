@@ -3,7 +3,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/multiline_text_field.dart';
-import 'package:repair_app/pages/splash_screen.dart';
+import '/widgets/custom_appbar.dart';
+import '/pages/splash_screen.dart';
 
 const Color primaryOrange = Color(0xFFFF9800);
 
@@ -222,195 +223,250 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        backgroundColor: Colors.indigo[900],
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage:
-                        _image != null
-                            ? FileImage(File(_image!.path))
-                            : const AssetImage('assets/profile_pic.png')
-                                as ImageProvider,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle, color: primaryOrange),
-                    onPressed: _pickImage,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _firstNameController,
-                      label: 'First Name',
-                      icon: Icons.person,
-                      validator:
-                          (value) =>
-                              value == null || value.isEmpty
-                                  ? 'Enter your first name'
-                                  : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _lastNameController,
-                      label: 'Last Name',
-                      icon: Icons.person_outline,
-                      validator:
-                          (value) =>
-                              value == null || value.isEmpty
-                                  ? 'Enter your last name'
-                                  : null,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _emailController,
-                label: 'Email',
-                icon: Icons.email,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter your email';
-                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                  if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _locationController,
-                label: 'Location',
-                icon: Icons.location_on,
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? 'Enter your location'
-                            : null,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedSpecialization,
-                decoration: InputDecoration(
-                  labelText: 'Specialization',
-                  labelStyle: const TextStyle(
-                    color: primaryOrange,
-                  ), 
-                  prefixIcon: Icon(Icons.build, color: primaryOrange),
-                  border: const OutlineInputBorder(
-                    borderSide: BorderSide(color: primaryOrange),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: primaryOrange, width: 2.0),
-                  ),
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: primaryOrange),
-                  ),
-                ),
-                iconEnabledColor: primaryOrange,
-                dropdownColor: Colors.white,
-                items:
-                    _specializations
-                        .map(
-                          (spec) =>
-                              DropdownMenuItem(value: spec, child: Text(spec)),
-                        )
-                        .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedSpecialization = value);
-                  }
-                },
-              ),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            const CustomAppBar(title: 'Profile'),
+            SliverPadding(
+              padding: const EdgeInsets.all(20.0),
+              sliver: SliverFillRemaining(
+                hasScrollBody: true,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          CircleAvatar(
+                            radius: 60,
+                            backgroundImage:
+                                _image != null
+                                    ? FileImage(File(_image!.path))
+                                    : const AssetImage('assets/profile_pic.png')
+                                        as ImageProvider,
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.add_circle,
+                              color: primaryOrange,
+                            ),
+                            onPressed: _pickImage,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomTextField(
+                                    controller: _firstNameController,
+                                    label: 'First Name',
+                                    icon: Icons.person,
+                                    validator:
+                                        (value) =>
+                                            value == null || value.isEmpty
+                                                ? 'Enter your first name'
+                                                : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: CustomTextField(
+                                    controller: _lastNameController,
+                                    label: 'Last Name',
+                                    icon: Icons.person_outline,
+                                    validator:
+                                        (value) =>
+                                            value == null || value.isEmpty
+                                                ? 'Enter your last name'
+                                                : null,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            CustomTextField(
+                              controller: _emailController,
+                              label: 'Email',
+                              icon: Icons.email,
+                              validator: (value) {
+                                if (value == null || value.isEmpty)
+                                  return 'Enter your email';
+                                final emailRegex = RegExp(
+                                  r'^[^@]+@[^@]+\.[^@]+',
+                                );
+                                if (!emailRegex.hasMatch(value))
+                                  return 'Enter a valid email';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            CustomTextField(
+                              controller: _locationController,
+                              label: 'Location',
+                              icon: Icons.location_on,
+                              validator:
+                                  (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'Enter your location'
+                                          : null,
+                            ),
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<String>(
+                              value: _selectedSpecialization,
+                              decoration: InputDecoration(
+                                labelText: 'Specialization',
+                                labelStyle: const TextStyle(
+                                  color: primaryOrange,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.build,
+                                  color: primaryOrange,
+                                ),
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: primaryOrange),
+                                ),
+                                focusedBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: primaryOrange,
+                                    width: 2.0,
+                                  ),
+                                ),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(color: primaryOrange),
+                                ),
+                              ),
+                              iconEnabledColor: primaryOrange,
+                              dropdownColor: Colors.white,
+                              items:
+                                  _specializations
+                                      .map(
+                                        (spec) => DropdownMenuItem(
+                                          value: spec,
+                                          child: Text(spec),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(
+                                    () => _selectedSpecialization = value,
+                                  );
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            CustomMultilineTextField(
+                              controller: _bioController,
+                              label: 'Bio',
+                              icon: Icons.description,
+                              validator:
+                                  (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'Enter your bio'
+                                          : null,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () {
+                                if (_formKey.currentState!.validate()) {
+                                  debugPrint(
+                                    'First Name: ${_firstNameController.text}',
+                                  );
+                                  debugPrint(
+                                    'Specialization: $_selectedSpecialization',
+                                  );
+                                  _showGreenSnackBar(
+                                    'Profile updated successfully!',
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryOrange,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: const Text(
+                                '\t\tSave Changes\t\t',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            const Divider(),
+                            const Text(
+                              'Feedbacks',
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.indigo,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            ..._feedbacks.map(
+                              (f) => ListTile(
+                                leading: const Icon(
+                                  Icons.comment,
+                                  color: Colors.orange,
+                                ),
+                                title: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    f,
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                    ), // Adjust text style if needed
+                                  ),
+                                ),
+                              ),
+                            ),
 
-              const SizedBox(height: 16),
-              CustomMultilineTextField(
-                // Corrected widget name usage
-                controller: _bioController,
-                label: 'Bio',
-                icon: Icons.description,
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? 'Enter your bio'
-                            : null,
-              ),
-              const SizedBox(height: 24),
-              const Divider(),
-              const Text(
-                'Feedbacks',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              ..._feedbacks.map(
-                (f) => ListTile(
-                  leading: const Icon(Icons.comment, color: Colors.orange),
-                  title: Text(f),
-                ),
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.lock),
-                title: const Text('Change Password'),
-                onTap: () => _showChangePasswordDialog(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Logout'),
-                onTap: () {
-                  debugPrint('User logged out.');
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => SplashScreen()),
-                    (route) => false,
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text(
-                  'Delete Account',
-                  style: TextStyle(color: Colors.red),
-                ),
-                onTap: () => _showDeleteDialog(context),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    debugPrint('First Name: ${_firstNameController.text}');
-                    debugPrint('Specialization: $_selectedSpecialization');
-                    _showGreenSnackBar('Profile updated successfully!');
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryOrange,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                            const Divider(),
+                            ListTile(
+                              leading: const Icon(Icons.lock),
+                              title: const Text('Change Password'),
+                              onTap: () => _showChangePasswordDialog(context),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.logout),
+                              title: const Text('Logout'),
+                              onTap: () {
+                                debugPrint('User logged out.');
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => SplashScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(
+                                Icons.delete,
+                                color: Colors.red,
+                              ),
+                              title: const Text(
+                                'Delete Account',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                              onTap: () => _showDeleteDialog(context),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: const Text(
-                  '\t\tSave Changes\t\t',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -125,16 +125,7 @@ class _SignUpFormState extends State<SignUpForm> {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 20),
-          Text(
-            'Sign Up',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: primaryOrange,
-            ),
-            textAlign: TextAlign.center,
-          ),
+
           const SizedBox(height: 20),
           Form(
             key: _formKey,
@@ -224,7 +215,7 @@ class _SignUpFormState extends State<SignUpForm> {
                     ),
                     onPressed: _submit,
                     child: const Text(
-                      'Next',
+                      'Sign Up',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

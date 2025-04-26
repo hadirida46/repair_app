@@ -4,27 +4,27 @@ class Chat extends StatefulWidget {
   const Chat({super.key});
 
   @override
-  _ChatState createState() => _ChatState();
+  State<Chat> createState() => _ChatState();
 }
 
 class _ChatState extends State<Chat> {
   final List<Map<String, String>> _messages = [];
   final TextEditingController _messageController = TextEditingController();
 
-  // Function to add a new message to the Chat
-  void _sendMessage(String text) {
-    if (text.trim().isNotEmpty) {
-      // prevent empty messages
-      setState(() {
-        _messages.add({
-          'sender': 'User', // or 'Specialist'
-          'text': text,
-          'timestamp': DateTime.now().toString(),
-        });
+  void _sendMessage() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      _messages.add({
+        'sender':
+            'User', // You can later change it based on who sends the message
+        'text': text,
+        'timestamp': TimeOfDay.now().format(context),
       });
-      _messageController.clear();
-      // back end
-    }
+    });
+    _messageController.clear();
+    // Here you can also call your backend API
   }
 
   @override
@@ -36,95 +36,107 @@ class _ChatState extends State<Chat> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text("Ali Ahmad"),
         backgroundColor: Colors.indigo[900],
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: ListView.builder(
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  return _buildMessageBubble(message);
-                },
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.indigo[900],
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: const InputDecoration(
-                        hintText: 'Type your message...',
-                        border:
-                            InputBorder
-                                .none, // Remove border to match the style
-                        hintStyle: TextStyle(
-                          color: Colors.white,
-                        ), // Hint text color
+      body: Column(
+        children: [
+          Expanded(
+            child:
+                _messages.isEmpty
+                    ? const Center(
+                      child: Text(
+                        "No messages yet.",
+                        style: TextStyle(color: Colors.black54),
                       ),
-                      maxLines: null,
-                      keyboardType: TextInputType.multiline,
-                      style: const TextStyle(color: Colors.white), // Text color
-                      onSubmitted: _sendMessage,
+                    )
+                    : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final message = _messages[index];
+                        return _buildMessageBubble(message);
+                      },
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.send,
-                      color: Colors.white,
-                    ), // Button color
-                    onPressed: () {
-                      _sendMessage(_messageController.text);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+          _buildMessageInput(),
+        ],
       ),
     );
   }
 
-  // Function to build a single message bubble
+  Widget _buildMessageInput() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: Colors.white,
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                hintText: 'Type a message...',
+                hintStyle: const TextStyle(color: Colors.black54),
+                filled: true,
+                fillColor: Colors.grey[200],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _sendMessage(),
+            ),
+          ),
+          const SizedBox(width: 10),
+          CircleAvatar(
+            backgroundColor: Colors.indigo[900],
+            child: IconButton(
+              icon: const Icon(Icons.send, color: Colors.white),
+              onPressed: _sendMessage,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMessageBubble(Map<String, String> message) {
     final isUser = message['sender'] == 'User';
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5),
+
+    return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        margin: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.7,
+        ),
         decoration: BoxDecoration(
-          color:
-              isUser
-                  ? Colors.blue[200]
-                  : Colors.grey[300], // Default for Specialist
-          borderRadius: BorderRadius.circular(10),
+          color: isUser ? Colors.indigo[300] : Colors.grey[300],
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(12),
+            topRight: const Radius.circular(12),
+            bottomLeft: Radius.circular(isUser ? 12 : 0),
+            bottomRight: Radius.circular(isUser ? 0 : 12),
+          ),
         ),
         child: Column(
-          crossAxisAlignment:
-              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(message['text'] ?? '', style: const TextStyle(fontSize: 16)),
             Text(
-              message['timestamp'] != null
-                  ? message['timestamp']!.substring(11, 16)
-                  : '',
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
+              message['text'] ?? '',
+              style: const TextStyle(fontSize: 16, color: Colors.white),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              message['timestamp'] ?? '',
+              style: TextStyle(fontSize: 11, color: Colors.white70),
             ),
           ],
         ),

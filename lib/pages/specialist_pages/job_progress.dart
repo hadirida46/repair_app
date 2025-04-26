@@ -15,7 +15,9 @@ class JobProgressPage extends StatefulWidget {
 class _JobProgressPageState extends State<JobProgressPage> {
   static const Color primaryOrange = Color(0xFFFFA726);
   final ImagePicker _picker = ImagePicker();
+
   final List<File> _images = [];
+  final List<String> _imageNotes = [];
 
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(
@@ -25,6 +27,7 @@ class _JobProgressPageState extends State<JobProgressPage> {
     if (pickedFile != null) {
       setState(() {
         _images.add(File(pickedFile.path));
+        _imageNotes.add('');
       });
     }
   }
@@ -32,6 +35,7 @@ class _JobProgressPageState extends State<JobProgressPage> {
   void _removeImage(int index) {
     setState(() {
       _images.removeAt(index);
+      _imageNotes.removeAt(index);
     });
   }
 
@@ -73,16 +77,39 @@ class _JobProgressPageState extends State<JobProgressPage> {
       runSpacing: 12,
       children:
           _images.asMap().entries.map((entry) {
+            int index = entry.key;
             return Stack(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    entry.value,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 5),
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Add a note for this image',
+                        labelStyle: TextStyle(color: primaryOrange),
+                        border: OutlineInputBorder(),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: primaryOrange),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _imageNotes[index] = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        entry.value,
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ],
                 ),
                 Positioned(
                   right: -10,
@@ -132,8 +159,8 @@ class _JobProgressPageState extends State<JobProgressPage> {
             _buildLabel('Location:'),
             Text(job['location'] ?? 'No Location'),
             const SizedBox(height: 8),
-            _buildLabel('Handled by:'),
-            Text(job['handled_by'] ?? 'No Specialist Assigned'),
+            _buildLabel('Reported By:'),
+            Text(job['Reported_by'] ?? 'No Specialist Assigned'),
             const SizedBox(height: 16),
             _buildLabel('Description:'),
             Text(job['description'] ?? 'No Description'),
@@ -167,6 +194,7 @@ class _JobProgressPageState extends State<JobProgressPage> {
             if (_images.isNotEmpty) _buildImageGallery(),
             const SizedBox(height: 24),
 
+            const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '/widgets/custom_appbar.dart';
-import 'specialist_profile_view.dart'; 
+import 'specialist_profile_view.dart';
 
 class SpecialistList extends StatefulWidget {
   const SpecialistList({super.key});
@@ -54,9 +53,22 @@ class _SpecialistListState extends State<SpecialistList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Specialists'),
+        backgroundColor: Colors.indigo[900],
+        foregroundColor: Colors.white, // Set text color to white
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ), // Set back button color to white
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
-          const CustomAppBar(title: 'Specialists'),
           SliverPadding(
             padding: const EdgeInsets.all(20.0),
             sliver:
