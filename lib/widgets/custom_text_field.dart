@@ -8,7 +8,7 @@ class CustomTextField extends StatelessWidget {
   final bool isPassword;
   final double textFieldHeight;
   final String? Function(String?)? validator;
-  final bool enabled; // Add this line
+  final bool enabled;   
 
   const CustomTextField({
     super.key,
@@ -19,7 +19,7 @@ class CustomTextField extends StatelessWidget {
     this.isPassword = false,
     this.textFieldHeight = 60.0,
     this.validator,
-    this.enabled = true, // Default value set to true
+    this.enabled = true,
   });
 
   @override
@@ -36,19 +36,19 @@ class CustomTextField extends StatelessWidget {
       obscureText: isPassword,
       keyboardType: keyboardType,
       validator: validator,
-      enabled: enabled, // Use the enabled parameter here
+      enabled: enabled,
       style: const TextStyle(
         fontFamily:
-            'Roboto', // Use a regular font like 'Roboto' for normal input
-        fontSize: 16.0, // Regular font size
-        color: Colors.black, // Regular black color for input text
+            'Roboto',
+        fontSize: 16.0, 
+        color: Colors.black, 
       ),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(
-          fontFamily: 'Roboto', // Ensure the label also uses the regular font
-          fontSize: 16.0, // Regular font size for label
-          color: primaryOrange, // Orange color for label
+          fontFamily: 'Roboto',
+          fontSize: 16.0,
+          color: primaryOrange,
         ),
         prefixIcon: Icon(icon, color: primaryOrange),
         enabledBorder: borderStyle,

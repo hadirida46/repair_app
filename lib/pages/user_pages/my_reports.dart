@@ -3,7 +3,7 @@ import '/widgets/custom_appbar.dart';
 import '/widgets/report_status.dart';
 import 'specialist_list.dart';
 import 'job_tracking.dart';
-import 'feedback.dart'; // Make sure this path is correct
+import 'feedback.dart';
 
 class MyReports extends StatefulWidget {
   const MyReports({super.key});
@@ -55,23 +55,91 @@ class _MyReportsState extends State<MyReports> {
     },
   ];
 
-  void _navigateBasedOnStatus(String status) {
+  void _handleReportNavigation(String status) {
     if (status == 'In Progress') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const JobTrackingPage()),
-      );
-    } else if (status == 'Escalated' ||
-        status == 'Rejected' ||
-        status == 'Waiting For Confirmation') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SpecialistList()),
+        MaterialPageRoute(builder: (context) => JobTrackingPage()),
       );
     } else if (status == 'Completed') {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const FeedbackPage()),
+      );
+    }
+    // Remove the else block if no other action is needed
+  }
+
+  Future<void> _showDeleteConfirmation(int index) async {
+    bool confirmDelete = false;
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Are you sure?'),
+          content: const Text('Do you really want to delete this report?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                confirmDelete = true;
+                Navigator.of(context).pop();
+              },
+              child: const Text('Yes'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('No'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmDelete) {
+      setState(() {
+        _reports.removeAt(index);
+      });
+    }
+  }
+
+  void _showReportMenu(int index, Map<String, String> reportData) async {
+    if (reportData['status'] != 'Completed' &&
+        reportData['status'] != 'In Progress') {
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(reportData['title'] ?? 'Report Menu'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.delete, color: Colors.red),
+                  title: const Text('Delete Report'),
+                  onTap: () {
+                    Navigator.pop(context); // Close dialog
+                    _showDeleteConfirmation(index);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.search, color: primaryOrange),
+                  title: const Text('Search for New Specialist'),
+                  onTap: () {
+                    Navigator.pop(context); // Close dialog
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SpecialistList(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
       );
     }
   }
@@ -106,9 +174,10 @@ class _MyReportsState extends State<MyReports> {
                         final report = _reports[index];
                         return GestureDetector(
                           onTap:
-                              () => _navigateBasedOnStatus(
+                              () => _handleReportNavigation(
                                 report['status'] ?? 'Unknown',
                               ),
+
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
@@ -164,6 +233,14 @@ class _MyReportsState extends State<MyReports> {
                                   ),
                                   softWrap: true,
                                 ),
+                                if (report['status'] != 'Completed' &&
+                                    report['status'] != 'In Progress')
+                                  IconButton(
+                                    icon: const Icon(Icons.more_vert),
+                                    onPressed: () {
+                                      _showReportMenu(index, report);
+                                    },
+                                  ),
                               ],
                             ),
                           ),

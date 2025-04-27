@@ -17,7 +17,43 @@ class _JobProgressPageState extends State<JobProgressPage> {
   final ImagePicker _picker = ImagePicker();
 
   final List<File> _images = [];
-  final List<String> _imageNotes = [];
+  final List<TextEditingController> _commentControllers = [];
+  final List<String> _specialistComments = [];
+  final List<bool> _commentAdded = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _syncCommentAndSpecialistLists();
+  }
+
+  @override
+  void didUpdateWidget(covariant JobProgressPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncCommentAndSpecialistLists();
+  }
+
+  void _syncCommentAndSpecialistLists() {
+    while (_commentControllers.length < _images.length) {
+      _commentControllers.add(TextEditingController());
+      _specialistComments.add('');
+      _commentAdded.add(false);
+    }
+    while (_commentControllers.length > _images.length) {
+      _commentControllers.last.dispose();
+      _commentControllers.removeLast();
+      _specialistComments.removeLast();
+      _commentAdded.removeLast();
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _commentControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(
@@ -27,7 +63,9 @@ class _JobProgressPageState extends State<JobProgressPage> {
     if (pickedFile != null) {
       setState(() {
         _images.add(File(pickedFile.path));
-        _imageNotes.add('');
+        _commentControllers.add(TextEditingController());
+        _specialistComments.add('');
+        _commentAdded.add(false);
       });
     }
   }
@@ -35,7 +73,20 @@ class _JobProgressPageState extends State<JobProgressPage> {
   void _removeImage(int index) {
     setState(() {
       _images.removeAt(index);
-      _imageNotes.removeAt(index);
+      _commentControllers.removeAt(index);
+      _specialistComments.removeAt(index);
+      _commentAdded.removeAt(index);
+    });
+  }
+
+  void _sendComment(int index) {
+    final userComment = _commentControllers[index].text;
+    print('User comment for image ${index + 1}: $userComment');
+
+    setState(() {
+      _specialistComments[index] = userComment;
+      _commentControllers[index].clear();
+      _commentAdded[index] = true;
     });
   }
 
@@ -74,32 +125,15 @@ class _JobProgressPageState extends State<JobProgressPage> {
   Widget _buildImageGallery() {
     return Wrap(
       spacing: 12,
-      runSpacing: 12,
+      runSpacing: 20,
       children:
           _images.asMap().entries.map((entry) {
-            int index = entry.key;
-            return Stack(
+            final index = entry.key;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Stack(
                   children: [
-                    const SizedBox(height: 5),
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Add a note for this image',
-                        labelStyle: TextStyle(color: primaryOrange),
-                        border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: primaryOrange),
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _imageNotes[index] = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 8),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.file(
@@ -109,15 +143,61 @@ class _JobProgressPageState extends State<JobProgressPage> {
                         fit: BoxFit.cover,
                       ),
                     ),
+                    Positioned(
+                      right: -10,
+                      top: -10,
+                      child: IconButton(
+                        icon: const Icon(Icons.cancel, color: Colors.red),
+                        onPressed: () => _removeImage(index),
+                      ),
+                    ),
                   ],
                 ),
-                Positioned(
-                  right: -10,
-                  top: -10,
-                  child: IconButton(
-                    icon: const Icon(Icons.cancel, color: Colors.red),
-                    onPressed: () => _removeImage(entry.key),
+                const SizedBox(height: 8),
+                if (_specialistComments[index].isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text(
+                      'Specialist Comment: ${_specialistComments[index]}',
+                      style: const TextStyle(fontStyle: FontStyle.italic),
+                    ),
                   ),
+                Row(
+                  children: [
+                    if (!_commentAdded[index])
+                      Expanded(
+                        child: TextField(
+                          controller: _commentControllers[index],
+                          decoration: const InputDecoration(
+                            labelText: 'Add your comment',
+                            labelStyle: TextStyle(color: primaryOrange),
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: primaryOrange),
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (!_commentAdded[index]) const SizedBox(width: 8),
+                    if (!_commentAdded[index])
+                      ElevatedButton(
+                        onPressed: () => _sendComment(index),
+                        child: const Text('Send'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryOrange,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ),
+                        ),
+                      ),
+                    if (_commentAdded[index]) const Expanded(child: SizedBox()),
+                    if (_commentAdded[index]) const SizedBox(width: 8),
+                    if (_commentAdded[index]) const SizedBox(width: 80),
+                  ],
                 ),
               ],
             );
@@ -165,7 +245,6 @@ class _JobProgressPageState extends State<JobProgressPage> {
             _buildLabel('Description:'),
             Text(job['description'] ?? 'No Description'),
             const SizedBox(height: 20),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -188,12 +267,9 @@ class _JobProgressPageState extends State<JobProgressPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 20),
-
             if (_images.isNotEmpty) _buildImageGallery(),
             const SizedBox(height: 24),
-
             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -228,9 +304,7 @@ class _JobProgressPageState extends State<JobProgressPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
-
             Center(
               child: _buildActionButton(
                 icon: Icons.save,
@@ -247,9 +321,7 @@ class _JobProgressPageState extends State<JobProgressPage> {
                 },
               ),
             ),
-
             const SizedBox(height: 24),
-
             Center(
               child: _buildActionButton(
                 icon: Icons.chat,

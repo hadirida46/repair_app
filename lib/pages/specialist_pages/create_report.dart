@@ -99,21 +99,42 @@ class _SCreateReportState extends State<SCreateReport>
     if (status == 'In Progress') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const JobTrackingPage()),
+        MaterialPageRoute(builder: (context) => JobTrackingPage()),
       );
     } else if (status == 'Completed') {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const FeedbackPage()),
       );
-    } else if (status == 'Rejected' ||
-        status == 'Escalated' ||
-        status == 'Waiting For Confirmation') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SpecialistList()),
-      );
     }
+    
+  }
+
+  void _showDeleteDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Are you sure?"),
+          content: const Text("This report will be permanently deleted."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _reports.removeAt(index);
+                });
+                Navigator.pop(context);
+              },
+              child: const Text("Yes"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("No"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -294,7 +315,7 @@ class _SCreateReportState extends State<SCreateReport>
                     ),
                   ),
 
-                  // MY REPORTS TAB
+                  // MY REPORTS TAB FOR SPECIALIST
                   _reports.isEmpty
                       ? const Center(
                         child: Text(
@@ -346,6 +367,38 @@ class _SCreateReportState extends State<SCreateReport>
                                   ),
                                   const SizedBox(height: 6),
                                   Text(report['description']!),
+                                  // Add PopupMenuButton for report options
+                                  if (report['status'] != 'Completed' &&
+                                      report['status'] != 'In Progress')
+                                    PopupMenuButton<String>(
+                                      onSelected: (value) {
+                                        if (value == 'delete') {
+                                          _showDeleteDialog(index);
+                                        } else if (value == 'search') {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (context) =>
+                                                      const SpecialistList(),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      itemBuilder:
+                                          (context) => [
+                                            const PopupMenuItem<String>(
+                                              value: 'delete',
+                                              child: Text('Delete Report'),
+                                            ),
+                                            const PopupMenuItem<String>(
+                                              value: 'search',
+                                              child: Text(
+                                                'Search for New Specialist',
+                                              ),
+                                            ),
+                                          ],
+                                    ),
                                 ],
                               ),
                             ),

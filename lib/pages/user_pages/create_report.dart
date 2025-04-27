@@ -23,7 +23,6 @@ class _CreateReportState extends State<CreateReport> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
-
   List<File> _selectedImages = [];
 
   Future<void> _pickImage(ImageSource source) async {
@@ -36,35 +35,43 @@ class _CreateReportState extends State<CreateReport> {
     }
   }
 
-  void _submitReport() {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedImages.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please add or take a photo before submitting.'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-            ),
-            margin: EdgeInsets.all(16),
-          ),
-        );
-        return;
-      }
-
-      // You can use these values to send to backend
-      final title = _titleController.text.trim();
-      final description = _descriptionController.text.trim();
-      final location = _locationController.text.trim();
-      debugPrint('Report Submitted with $title, $description, $location');
-    }
-  }
-
   void _removeImage(int index) {
     setState(() {
       _selectedImages.removeAt(index);
     });
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: deleteIconColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  void _handleSubmit() {
+    if (!_formKey.currentState!.validate()) {
+      _showErrorSnackBar('Please complete all required fields.');
+      return;
+    }
+    if (_selectedImages.isEmpty) {
+      _showErrorSnackBar('Please add or take a photo before proceeding.');
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SpecialistList()),
+    );
   }
 
   @override
@@ -214,14 +221,7 @@ class _CreateReportState extends State<CreateReport> {
                     ),
                     const SizedBox(height: 30),
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SpecialistList(),
-                          ),
-                        );
-                      },
+                      onPressed: _handleSubmit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.indigo[900],
                         foregroundColor: Colors.white,
