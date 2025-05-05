@@ -25,7 +25,7 @@ class _UserSpecialistToggleState extends State<UserSpecialistToggle> {
 
   void _toggle(String value) {
     setState(() => selected = value);
-    widget.onToggle(value);
+    widget.onToggle(value);  // Notify parent of the new selected value
   }
 
   @override
@@ -52,7 +52,7 @@ class _UserSpecialistToggleState extends State<UserSpecialistToggle> {
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => _toggle(value),
+        onTap: () => _toggle(value),  // Toggle the value
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 12),

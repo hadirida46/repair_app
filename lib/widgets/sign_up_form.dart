@@ -4,6 +4,9 @@ import '../pages/user_pages/main_page.dart';
 import '../pages/specialist_pages/main_page.dart';
 import '/widgets/custom_text_field.dart';
 import '/widgets/user_specialist_toggle.dart';
+import 'dart:convert'; // For encoding the data
+import 'package:http/http.dart' as http; // For making HTTP requests
+import '../constants.dart'; // To access baseUrl
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});
@@ -56,29 +59,68 @@ class _SignUpFormState extends State<SignUpForm> {
     return null;
   }
 
-  void _submit() {
+  void _submit() async {
     if (_formKey.currentState!.validate()) {
+      // Show loading message or SnackBar
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Signing up as $selectedRole...')));
+      ).showSnackBar(const SnackBar(content: Text('Signing up...')));
 
-      Future.delayed(const Duration(seconds: 1), () {
-        if (selectedRole == 'Specialist') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const SpecialistMainPage(),
-            ), // Navigate to SpecialistMainPage
+      // Prepare data for the API request
+      Map<String, String> userData = {
+        'first_name': _firstNameController.text,
+        'last_name': _lastNameController.text,
+        'email': _emailController.text,
+        'password': _passwordController.text,
+        'password_confirmation': _confirmPasswordController.text,
+        'role':
+            selectedRole.toLowerCase(), // Convert role to lowercase if required
+      };
+
+      try {
+        // Make the POST request to your Laravel API
+        final response = await http.post(
+          Uri.parse(
+            '$baseUrl/register',
+          ), // Use baseUrl for your local Laravel API
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(userData), // Convert map to JSON
+        );
+
+        if (response.statusCode == 200) {
+          // If the request was successful, navigate to the appropriate page
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registration successful!')),
           );
+
+          // Delay navigation to see the SnackBar
+          Future.delayed(const Duration(seconds: 1), () {
+            if (selectedRole == 'Specialist') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SpecialistMainPage(),
+                ),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainPage()),
+              );
+            }
+          });
         } else {
-          Navigator.pushReplacement(
+          // If the response is not OK, show an error
+          ScaffoldMessenger.of(
             context,
-            MaterialPageRoute(
-              builder: (context) => const MainPage(),
-            ), // Navigate to MainPage for regular users
-          );
+          ).showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
         }
-      });
+      } catch (e) {
+        // Handle network errors or other exceptions
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
