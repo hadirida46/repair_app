@@ -5,6 +5,12 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/multiline_text_field.dart';
 import '/widgets/custom_appbar.dart';
 import '/pages/splash_screen.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../constants.dart';
+import 'package:image/image.dart' as img;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const Color primaryOrange = Color(0xFFFF9800);
 
@@ -17,32 +23,25 @@ class SpecialistProfile extends StatefulWidget {
 
 class _SpecialistProfileState extends State<SpecialistProfile> {
   XFile? _image;
-
+  String? _profileImageUrl; // To store the URL from the backend
   final _formKey = GlobalKey<FormState>();
-
-  final TextEditingController _firstNameController = TextEditingController(
-    text: 'John',
-  );
-  final TextEditingController _lastNameController = TextEditingController(
-    text: 'Doe',
-  );
-  final TextEditingController _emailController = TextEditingController(
-    text: 'specialist@example.com',
-  );
-  final TextEditingController _locationController = TextEditingController(
-    text: 'Default Location',
-  );
-  final TextEditingController _bioController = TextEditingController(
-    text: 'I have 10+ years of experience in home repairs.',
-  );
-
-  String _selectedSpecialization = 'Contractor';
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
+  String? _selectedSpecialization;
+  double? _latitude;
+  double? _longitude;
+  bool _isLoading = false;
+  final _storage = const FlutterSecureStorage();
+  String? _token;
 
   final List<String> _specializations = [
-    'Contractor',
-    'Electrician',
-    'Plumber',
-    'Handyman',
+    'contractor',
+    'electrician',
+    'plumber',
+    'handyman',
   ];
 
   final List<String> _feedbacks = [
@@ -51,18 +50,10 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
     'Excellent work, highly recommended.',
   ];
 
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      setState(() => _image = pickedFile);
-      debugPrint('Selected image path: ${pickedFile.path}');
-    }
-  }
+  // --- Helper Methods ---
 
   void _showRedSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -81,6 +72,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
   }
 
   void _showGreenSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -103,6 +95,239 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
     final hasUppercase = RegExp(r'[A-Z]').hasMatch(password);
     final hasNumber = RegExp(r'\d').hasMatch(password);
     return password.isNotEmpty && hasMinLength && hasUppercase && hasNumber;
+  }
+
+  // --- API Interaction Methods ---
+
+  Future<void> _getToken() async {
+    try {
+      _token = await _storage.read(key: 'auth_token');
+      if (_token == null) {
+        _showRedSnackBar(
+          'You are not logged in. Please log in to view your profile.',
+        );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => SplashScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      _showRedSnackBar('Error accessing secure storage: $e');
+      debugPrint('Error accessing secure storage: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+  }
+
+  Future<void> _fetchSpecialistProfile() async {
+    if (_token == null) {
+      await _getToken();
+      if (_token == null) return;
+    }
+    setState(() {
+      _isLoading = true;
+    });
+    final url = Uri.parse('$baseUrl/profile');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body)['data'];
+        debugPrint('Backend Specialization Value: ${data['specialization']}');
+        setState(() {
+          _firstNameController.text = data['first_name'] ?? '';
+          _lastNameController.text = data['last_name'] ?? '';
+          _emailController.text = data['email'] ?? '';
+          _locationController.text = data['location'] ?? '';
+          _bioController.text = data['bio'] ?? '';
+          _selectedSpecialization = data['specialization'] ?? 'null';
+          _latitude =
+              data['latitude'] != null
+                  ? double.tryParse(data['latitude'].toString())
+                  : null;
+          _longitude =
+              data['longitude'] != null
+                  ? double.tryParse(data['longitude'].toString())
+                  : null;
+          _profileImageUrl = data['profile_image'];
+        });
+      } else {
+        _showRedSnackBar('Failed to load profile: ${response.statusCode}');
+        debugPrint('Failed to fetch specialist profile: ${response.body}');
+      }
+    } catch (error) {
+      _showRedSnackBar('Error: $error');
+      debugPrint('Error fetching specialist profile: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _updateSpecialistProfile() async {
+    if (_token == null) {
+      await _getToken();
+      if (_token == null) return;
+    }
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+    final url = Uri.parse('$baseUrl/profile/update');
+    try {
+      final request = http.MultipartRequest('POST', url);
+      request.headers['Authorization'] = 'Bearer $_token';
+      request.headers['Accept'] = 'application/json';
+
+      request.fields['first_name'] = _firstNameController.text.trim();
+      request.fields['last_name'] = _lastNameController.text.trim();
+      request.fields['email'] = _emailController.text.trim();
+      request.fields['location'] = _locationController.text.trim();
+      request.fields['bio'] = _bioController.text.trim();
+      request.fields['specialization'] = _selectedSpecialization!;
+      if (_latitude != null) {
+        request.fields['latitude'] = _latitude.toString();
+      }
+      if (_longitude != null) {
+        request.fields['longitude'] = _longitude.toString();
+      }
+
+      if (_image != null) {
+        try {
+          final file = File(_image!.path);
+          final bytes = await file.readAsBytes();
+          final image = img.decodeImage(bytes);
+          if (image != null) {
+            final resizedImage = img.copyResize(image, width: 800);
+            final compressedImageBytes = img.encodeJpg(
+              resizedImage,
+              quality: 70,
+            );
+            final compressedFile = http.MultipartFile.fromBytes(
+              'profile_image',
+              compressedImageBytes,
+              filename: 'profile_image.jpg',
+            );
+            request.files.add(compressedFile);
+          } else {
+            _showRedSnackBar('Error decoding image.');
+            setState(() {
+              _isLoading = false;
+            });
+            return;
+          }
+        } catch (e) {
+          _showRedSnackBar('Error processing image: $e');
+          debugPrint('Error processing image: $e');
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final responseBody = response.body;
+
+      if (response.statusCode == 200) {
+        _showGreenSnackBar('Profile updated successfully!');
+        _fetchSpecialistProfile(); // Re-fetch profile data
+      } else {
+        _showRedSnackBar('Failed to update profile: ${response.statusCode}');
+        debugPrint('Failed to update specialist profile: $responseBody');
+      }
+    } catch (error) {
+      _showRedSnackBar('Error: $error');
+      debugPrint('Error updating specialist profile: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    if (_token == null) {
+      await _getToken();
+      if (_token == null) return;
+    }
+    final url = Uri.parse('$baseUrl/logout');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await _storage.delete(key: 'auth_token');
+        _showGreenSnackBar('Logged out successfully.');
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => SplashScreen()),
+          (route) => false,
+        );
+      } else {
+        _showRedSnackBar('Failed to logout: ${response.statusCode}');
+        debugPrint('Logout failed: ${response.body}');
+      }
+    } catch (error) {
+      _showRedSnackBar('Error: $error');
+      debugPrint('Error during logout: $error');
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    if (_token == null) {
+      await _getToken();
+      if (_token == null) return;
+    }
+    final url = Uri.parse('$baseUrl/profile/delete');
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await _storage.delete(key: 'auth_token');
+        _showGreenSnackBar('Account deleted successfully.');
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => SplashScreen()),
+          (route) => false,
+        );
+      } else {
+        _showRedSnackBar('Failed to delete account: ${response.statusCode}');
+        debugPrint('Failed account deletion: ${response.body}');
+      }
+    } catch (error) {
+      _showRedSnackBar('Error: $error');
+      debugPrint('Error deleting account: $error');
+    }
   }
 
   void _showChangePasswordDialog(BuildContext context) {
@@ -180,6 +405,9 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
 
                   Navigator.pop(ctx);
                   debugPrint('Password change requested: $current → $newPass');
+                  _showGreenSnackBar(
+                    'Password change functionality not implemented in this example.',
+                  );
                 },
                 child: const Text('Confirm'),
               ),
@@ -204,13 +432,8 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
               ),
               TextButton(
                 onPressed: () {
+                  _deleteAccount();
                   Navigator.pop(ctx);
-                  debugPrint('Account deletion initiated.');
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => SplashScreen()),
-                    (route) => false,
-                  );
                 },
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text('Delete'),
@@ -221,253 +444,353 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _fetchSpecialistProfile();
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _locationController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            const CustomAppBar(title: 'Profile'),
-            SliverPadding(
-              padding: const EdgeInsets.all(20.0),
-              sliver: SliverFillRemaining(
-                hasScrollBody: true,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          CircleAvatar(
-                            radius: 60,
-                            backgroundImage:
-                                _image != null
-                                    ? FileImage(File(_image!.path))
-                                    : const AssetImage('assets/profile_pic.png')
-                                        as ImageProvider,
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.add_circle,
-                              color: primaryOrange,
-                            ),
-                            onPressed: _pickImage,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            Row(
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : CustomScrollView(
+                  slivers: [
+                    const CustomAppBar(title: 'Profile'),
+                    SliverPadding(
+                      padding: const EdgeInsets.all(20.0),
+                      sliver: SliverFillRemaining(
+                        hasScrollBody: true,
+                        child: SingleChildScrollView(
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
                               children: [
-                                Expanded(
-                                  child: CustomTextField(
-                                    controller: _firstNameController,
-                                    label: 'First Name',
-                                    icon: Icons.person,
-                                    validator:
-                                        (value) =>
-                                            value == null || value.isEmpty
-                                                ? 'Enter your first name'
-                                                : null,
+                                Stack(
+                                  alignment: Alignment.bottomRight,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 60,
+                                      backgroundImage:
+                                          _profileImageUrl != null
+                                              ? NetworkImage(
+                                                '$_profileImageUrl',
+                                              )
+                                              : _image != null
+                                              ? FileImage(File(_image!.path))
+                                              : const AssetImage(
+                                                    'assets/profile_pic.png',
+                                                  )
+                                                  as ImageProvider,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.add_circle,
+                                        color: primaryOrange,
+                                      ),
+                                      onPressed: () async {
+                                        final pickedImage = await ImagePicker()
+                                            .pickImage(
+                                              source: ImageSource.gallery,
+                                            );
+                                        if (pickedImage != null) {
+                                          setState(() {
+                                            _image = pickedImage;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: CustomTextField(
+                                        controller: _firstNameController,
+                                        label: 'First Name',
+                                        icon: Icons.person,
+                                        validator:
+                                            (value) =>
+                                                value == null || value.isEmpty
+                                                    ? 'Enter your first name'
+                                                    : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: CustomTextField(
+                                        controller: _lastNameController,
+                                        label: 'Last Name',
+                                        icon: Icons.person_outline,
+                                        validator:
+                                            (value) =>
+                                                value == null || value.isEmpty
+                                                    ? 'Enter your last name'
+                                                    : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                CustomTextField(
+                                  controller: _emailController,
+                                  label: 'Email',
+                                  icon: Icons.email,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Enter your email';
+                                    }
+                                    final emailRegex = RegExp(
+                                      r'^[^@]+@[^@]+\.[^@]+',
+                                    );
+                                    if (!emailRegex.hasMatch(value)) {
+                                      return 'Enter a valid email';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                TypeAheadFormField(
+                                  textFieldConfiguration:
+                                      TextFieldConfiguration(
+                                        controller: _locationController,
+                                        decoration: InputDecoration(
+                                          labelText: 'Location',
+                                          labelStyle: const TextStyle(
+                                            color: primaryOrange,
+                                          ),
+                                          prefixIcon: const Icon(
+                                            Icons.location_on,
+                                            color: primaryOrange,
+                                          ),
+                                          focusedBorder:
+                                              const OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  color: primaryOrange,
+                                                ),
+                                              ),
+                                          enabledBorder:
+                                              const OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  color: primaryOrange,
+                                                ),
+                                              ),
+                                        ),
+                                      ),
+                                  suggestionsCallback: (pattern) async {
+                                    if (pattern.length < 2) {
+                                      return [];
+                                    }
+                                    final query = '$pattern, Lebanon';
+                                    final url = Uri.parse(
+                                      'https://nominatim.openstreetmap.org/search?format=json&q=$query',
+                                    );
+                                    try {
+                                      final response = await http.get(
+                                        url,
+                                        headers: {
+                                          'User-Agent':
+                                              'repair_app/1.0 (hadirdia46.gmail.com)',
+                                        },
+                                      );
+
+                                      if (response.statusCode == 200) {
+                                        try {
+                                          final List data = json.decode(
+                                            response.body,
+                                          );
+                                          debugPrint('API Response: $data');
+                                          return data;
+                                        } catch (e) {
+                                          debugPrint(
+                                            'Error decoding JSON: $e\nResponse Body: ${response.body}',
+                                          );
+                                          return [];
+                                        }
+                                      } else {
+                                        debugPrint(
+                                          'API Error: ${response.statusCode}\nResponse Body: ${response.body}',
+                                        );
+                                        return [];
+                                      }
+                                    } catch (e) {
+                                      debugPrint('Network error: $e');
+                                      return [];
+                                    }
+                                  },
+                                  itemBuilder: (context, suggestion) {
+                                    debugPrint('Suggestion Item: $suggestion');
+                                    return ListTile(
+                                      title: Text(
+                                        suggestion['display_name'] ??
+                                            'No Name Found', // Add null check
+                                      ),
+                                    );
+                                  },
+                                  onSuggestionSelected: (suggestion) {
+                                    _locationController.text =
+                                        suggestion['display_name'];
+                                    _latitude = double.tryParse(
+                                      suggestion['lat'],
+                                    );
+                                    _longitude = double.tryParse(
+                                      suggestion['lon'],
+                                    );
+                                    debugPrint(
+                                      'Selected Location: $_latitude, $_longitude',
+                                    );
+                                  },
+                                  validator:
+                                      (value) =>
+                                          value == null || value.isEmpty
+                                              ? 'Enter your location'
+                                              : null,
+                                ),
+                                const SizedBox(height: 16),
+                                DropdownButtonFormField<String>(
+                                  value: _selectedSpecialization,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Specialization',
+                                    labelStyle: TextStyle(color: primaryOrange),
+                                    prefixIcon: Icon(
+                                      Icons.build,
+                                      color: primaryOrange,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: primaryOrange,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: primaryOrange,
+                                        width: 2.0,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: primaryOrange,
+                                      ),
+                                    ),
+                                  ),
+                                  iconEnabledColor: primaryOrange,
+                                  dropdownColor: Colors.white,
+                                  items:
+                                      _specializations
+                                          .map(
+                                            (spec) => DropdownMenuItem(
+                                              value: spec,
+                                              child: Text(spec),
+                                            ),
+                                          )
+                                          .toList(),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setState(
+                                        () => _selectedSpecialization = value,
+                                      );
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                CustomMultilineTextField(
+                                  controller: _bioController,
+                                  label: 'Bio',
+                                  icon: Icons.description,
+                                  validator:
+                                      (value) =>
+                                          value == null || value.isEmpty
+                                              ? 'Enter your bio'
+                                              : null,
+                                ),
+                                const SizedBox(height: 24),
+                                ElevatedButton(
+                                  onPressed: _updateSpecialistProfile,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryOrange,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    '\t\tSave Changes\t\t',
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: CustomTextField(
-                                    controller: _lastNameController,
-                                    label: 'Last Name',
-                                    icon: Icons.person_outline,
-                                    validator:
-                                        (value) =>
-                                            value == null || value.isEmpty
-                                                ? 'Enter your last name'
-                                                : null,
+                                const Divider(),
+                                const Text(
+                                  'Feedbacks',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.indigo,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                                // ..._feedbacks.map(
+                                //   (f) => ListTile(
+                                //     leading: const Icon(
+                                //       Icons.comment,
+                                //       color: Colors.orange,
+                                //     ),
+                                //     title: Align(
+                                //       alignment: Alignment.centerLeft,
+                                //       child: Text(
+                                //         f,
+                                //         style: const TextStyle(
+                                //           color: Colors.black,
+                                //         ),
+                                //       ),
+                                //     ),
+                                //   ),
+                                // ),
+                                const Divider(),
+                                ListTile(
+                                  leading: const Icon(Icons.lock),
+                                  title: const Text('Change Password'),
+                                  onTap:
+                                      () => _showChangePasswordDialog(context),
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.logout),
+                                  title: const Text('Logout'),
+                                  onTap: _logout,
+                                ),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  title: const Text(
+                                    'Delete Account',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                  onTap: () => _showDeleteDialog(context),
+                                ),
+                                const SizedBox(height: 20),
                               ],
                             ),
-                            const SizedBox(height: 16),
-                            CustomTextField(
-                              controller: _emailController,
-                              label: 'Email',
-                              icon: Icons.email,
-                              validator: (value) {
-                                if (value == null || value.isEmpty)
-                                  return 'Enter your email';
-                                final emailRegex = RegExp(
-                                  r'^[^@]+@[^@]+\.[^@]+',
-                                );
-                                if (!emailRegex.hasMatch(value))
-                                  return 'Enter a valid email';
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            CustomTextField(
-                              controller: _locationController,
-                              label: 'Location',
-                              icon: Icons.location_on,
-                              validator:
-                                  (value) =>
-                                      value == null || value.isEmpty
-                                          ? 'Enter your location'
-                                          : null,
-                            ),
-                            const SizedBox(height: 16),
-                            DropdownButtonFormField<String>(
-                              value: _selectedSpecialization,
-                              decoration: InputDecoration(
-                                labelText: 'Specialization',
-                                labelStyle: const TextStyle(
-                                  color: primaryOrange,
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.build,
-                                  color: primaryOrange,
-                                ),
-                                border: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: primaryOrange),
-                                ),
-                                focusedBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: primaryOrange,
-                                    width: 2.0,
-                                  ),
-                                ),
-                                enabledBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: primaryOrange),
-                                ),
-                              ),
-                              iconEnabledColor: primaryOrange,
-                              dropdownColor: Colors.white,
-                              items:
-                                  _specializations
-                                      .map(
-                                        (spec) => DropdownMenuItem(
-                                          value: spec,
-                                          child: Text(spec),
-                                        ),
-                                      )
-                                      .toList(),
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(
-                                    () => _selectedSpecialization = value,
-                                  );
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            CustomMultilineTextField(
-                              controller: _bioController,
-                              label: 'Bio',
-                              icon: Icons.description,
-                              validator:
-                                  (value) =>
-                                      value == null || value.isEmpty
-                                          ? 'Enter your bio'
-                                          : null,
-                            ),
-                            const SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  debugPrint(
-                                    'First Name: ${_firstNameController.text}',
-                                  );
-                                  debugPrint(
-                                    'Specialization: $_selectedSpecialization',
-                                  );
-                                  _showGreenSnackBar(
-                                    'Profile updated successfully!',
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryOrange,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                              child: const Text(
-                                '\t\tSave Changes\t\t',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            const Divider(),
-                            const Text(
-                              'Feedbacks',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Colors.indigo,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            ..._feedbacks.map(
-                              (f) => ListTile(
-                                leading: const Icon(
-                                  Icons.comment,
-                                  color: Colors.orange,
-                                ),
-                                title: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    f,
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                    ), // Adjust text style if needed
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const Divider(),
-                            ListTile(
-                              leading: const Icon(Icons.lock),
-                              title: const Text('Change Password'),
-                              onTap: () => _showChangePasswordDialog(context),
-                            ),
-                            ListTile(
-                              leading: const Icon(Icons.logout),
-                              title: const Text('Logout'),
-                              onTap: () {
-                                debugPrint('User logged out.');
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => SplashScreen(),
-                                  ),
-                                  (route) => false,
-                                );
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                              ),
-                              title: const Text(
-                                'Delete Account',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                              onTap: () => _showDeleteDialog(context),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

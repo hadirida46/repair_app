@@ -56,12 +56,12 @@ class _SpecialistListState extends State<SpecialistList> {
       appBar: AppBar(
         title: const Text('Specialists'),
         backgroundColor: Colors.indigo[900],
-        foregroundColor: Colors.white, // Set text color to white
+        foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
             color: Colors.white,
-          ), // Set back button color to white
+          ),
           onPressed: () {
             Navigator.of(context).pop();
           },

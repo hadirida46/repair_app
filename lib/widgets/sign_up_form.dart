@@ -7,6 +7,7 @@ import '/widgets/user_specialist_toggle.dart';
 import 'dart:convert'; // For encoding the data
 import 'package:http/http.dart' as http; // For making HTTP requests
 import '../constants.dart'; // To access baseUrl
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});
@@ -22,6 +23,8 @@ class _SignUpFormState extends State<SignUpForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
 
   String selectedRole = 'User';
 
@@ -73,8 +76,7 @@ class _SignUpFormState extends State<SignUpForm> {
         'email': _emailController.text,
         'password': _passwordController.text,
         'password_confirmation': _confirmPasswordController.text,
-        'role':
-            selectedRole.toLowerCase(), // Convert role to lowercase if required
+        'role': selectedRole == 'User' ? 'user' : 'specialist',
       };
 
       try {
@@ -87,15 +89,20 @@ class _SignUpFormState extends State<SignUpForm> {
           body: json.encode(userData), // Convert map to JSON
         );
 
-        if (response.statusCode == 200) {
-          // If the request was successful, navigate to the appropriate page
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final data = json.decode(response.body);
+          final token = data['token'];
+          final user = data['user'];
+
+          // Store the token securely
+          await _secureStorage.write(key: 'auth_token', value: token);
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Registration successful!')),
           );
 
-          // Delay navigation to see the SnackBar
           Future.delayed(const Duration(seconds: 1), () {
-            if (selectedRole == 'Specialist') {
+            if (user['role'] == 'specialist') {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(

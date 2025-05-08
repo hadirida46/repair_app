@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '/widgets/custom_text_field.dart';
 import '/pages/sign_up.dart';
 import '../pages/user_pages/main_page.dart';
+import '../pages/specialist_pages/main_page.dart';
 import 'dart:convert'; // For encoding the data
 import 'package:http/http.dart' as http; // For making HTTP requests
 import '../constants.dart'; // To access baseUrl
@@ -28,21 +29,18 @@ class _SignInFormState extends State<SignInForm> {
 
   void _submit() async {
     if (_formKey.currentState!.validate()) {
-      // Show loading message or SnackBar
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Signing in...')));
 
-      // Prepare data for the API request
       Map<String, String> loginData = {
         'email': _emailController.text,
         'password': _passwordController.text,
       };
 
       try {
-        // Make the POST request to your Laravel API
         final response = await http.post(
-          Uri.parse('$baseUrl/login'), // Make sure the endpoint is correct
+          Uri.parse('$baseUrl/login'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(loginData),
         );
@@ -50,29 +48,41 @@ class _SignInFormState extends State<SignInForm> {
         if (response.statusCode == 200) {
           var responseData = json.decode(response.body);
           String token = responseData['token'];
+          String role = responseData['role'];
 
-          // Store token securely
           final storage = FlutterSecureStorage();
           await storage.write(key: 'auth_token', value: token);
+          await storage.write(key: 'user_role', value: role);
 
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Login successful!')));
+          // Debug: confirm it was saved
+          String? savedToken = await storage.read(key: 'auth_token');
+          print('Token read right after write: $savedToken');
 
           Future.delayed(const Duration(seconds: 1), () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MainPage()),
-            );
+            if (role == 'user') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainPage()),
+              );
+            } else if (role == 'specialist') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SpecialistMainPage(),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Unknown role')));
+            }
           });
         } else {
-          // If the response is not OK, show an error
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
         }
       } catch (e) {
-        // Handle network errors or other exceptions
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
