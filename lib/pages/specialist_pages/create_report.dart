@@ -319,7 +319,6 @@ class _SCreateReportState extends State<SCreateReport>
                     ),
                   ),
 
-                  // MY REPORTS TAB FOR SPECIALIST
                   _reports.isEmpty
                       ? const Center(
                         child: Text(

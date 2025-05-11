@@ -1,21 +1,35 @@
 import 'package:flutter/material.dart';
 import 'main_page.dart';
 import '/pages/chat.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
+import '../../constants.dart';
 
 const Color primaryOrange = Color(0xFFFF9800);
 
 class SpecialistProfileView extends StatelessWidget {
   final Map<String, String> specialist;
+  final int reportId;
 
-  const SpecialistProfileView({super.key, required this.specialist});
+  const SpecialistProfileView({
+    super.key,
+    required this.specialist,
+    required this.reportId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final String name = specialist['name'] ?? 'Specialist';
-    final String specialty = specialist['specialty'] ?? '';
+    final String name =
+        '${specialist['first_name'] ?? ''} ${specialist['last_name'] ?? ''}'
+            .trim();
+    final String email = specialist['email'] ?? '';
+    final String specialty = specialist['specialization'] ?? '';
+    final String? profileImage = specialist['profile_image'];
+    final String? bio = specialist['bio'];
 
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Set background color here
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text(
           '$specialty $name',
@@ -32,11 +46,42 @@ class SpecialistProfileView extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 60,
-              backgroundImage: const AssetImage('assets/profile_pic.png'),
               backgroundColor: Colors.grey.shade300,
+              child: ClipOval(
+                child:
+                    profileImage != null && profileImage.isNotEmpty
+                        ? Image.network(
+                          profileImage,
+                          fit: BoxFit.cover,
+                          width: 120,
+                          height: 120,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              'assets/profile_pic.png',
+                              fit: BoxFit.cover,
+                              width: 120,
+                              height: 120,
+                            );
+                          },
+                        )
+                        : Image.asset(
+                          'assets/profile_pic.png',
+                          fit: BoxFit.cover,
+                          width: 120,
+                          height: 120,
+                        ),
+              ),
             ),
+
+            const SizedBox(height: 16),
+            Text(
+              name,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            if (email.isNotEmpty)
+              Text(email, style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 20),
-            buildSection('Bio', specialist['bio']),
+            buildSection('Bio', bio),
             const SizedBox(height: 20),
             buildSection(
               'Feedbacks',
@@ -50,8 +95,6 @@ class SpecialistProfileView extends StatelessWidget {
               child: Image.asset('assets/electricity.png'),
             ),
             const SizedBox(height: 30),
-
-            // Chat button (smaller)
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -61,7 +104,7 @@ class SpecialistProfileView extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryOrange,
-                minimumSize: const Size(double.infinity, 45), // Smaller height
+                minimumSize: const Size(double.infinity, 45),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -73,16 +116,54 @@ class SpecialistProfileView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Select Specialist button (with icon)
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const MainPage(initialIndex: 1),
-                  ),
+              onPressed: () async {
+                final storage = FlutterSecureStorage();
+                final token = await storage.read(key: 'auth_token');
+                final specialistId = specialist['id'];
+
+                if (token == null || specialistId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Missing token or specialist ID'),
+                    ),
+                  );
+                  return;
+                }
+
+                final url = Uri.parse('$baseUrl/reports/$reportId/assign');
+
+                final response = await http.post(
+                  url,
+                  headers: {
+                    'Authorization': 'Bearer $token',
+                    'Content-Type': 'application/json',
+                  },
+                  body: json.encode({'specialist_id': int.parse(specialistId)}),
                 );
+
+                if (response.statusCode == 200) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Specialist assigned successfully!'),
+                    ),
+                  );
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MainPage(initialIndex: 1),
+                    ),
+                  );
+                } else {
+                  final error = json.decode(response.body);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Error: ${error['message'] ?? 'Failed to assign specialist'}',
+                      ),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.indigo[900],
@@ -101,7 +182,6 @@ class SpecialistProfileView extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 40),
           ],
         ),

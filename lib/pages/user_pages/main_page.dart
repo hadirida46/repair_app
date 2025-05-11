@@ -5,8 +5,9 @@ import 'create_report.dart';
 import '../chat_list.dart';
 import '/widgets/bottom_nav_bar.dart';
 import 'profile.dart';
+
 class MainPage extends StatefulWidget {
-  final int initialIndex; // Add this line
+  final int initialIndex;
 
   const MainPage({Key? key, this.initialIndex = 0}) : super(key: key);
 
@@ -15,8 +16,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  late int _selectedIndex; // Change to late
-
+  late int _selectedIndex;
   final List<Widget> _pages = [
     const Home(),
     const MyReports(),
@@ -28,7 +28,7 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialIndex; // Set selected index on start
+    _selectedIndex = widget.initialIndex;
   }
 
   void _onNavTapped(int index) {

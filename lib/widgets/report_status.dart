@@ -10,7 +10,7 @@ class ReportStatus extends StatelessWidget {
     Color color;
 
     switch (status) {
-      case 'Waiting For Confirmation':
+      case 'Waiting':
         color = Colors.grey;
         break;
       case 'Escalated':

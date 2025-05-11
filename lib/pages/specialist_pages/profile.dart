@@ -149,7 +149,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
           _emailController.text = data['email'] ?? '';
           _locationController.text = data['location'] ?? '';
           _bioController.text = data['bio'] ?? '';
-          _selectedSpecialization = data['specialization'] ?? 'null';
+          _selectedSpecialization = data['specialization']; 
           _latitude =
               data['latitude'] != null
                   ? double.tryParse(data['latitude'].toString())
@@ -661,7 +661,10 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
                                 ),
                                 const SizedBox(height: 16),
                                 DropdownButtonFormField<String>(
-                                  value: _selectedSpecialization,
+                                  value:
+                                      _selectedSpecialization == 'null'
+                                          ? null
+                                          : _selectedSpecialization, // Corrected value handling
                                   decoration: const InputDecoration(
                                     labelText: 'Specialization',
                                     labelStyle: TextStyle(color: primaryOrange),
@@ -688,22 +691,31 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
                                   ),
                                   iconEnabledColor: primaryOrange,
                                   dropdownColor: Colors.white,
-                                  items:
-                                      _specializations
-                                          .map(
-                                            (spec) => DropdownMenuItem(
-                                              value: spec,
-                                              child: Text(spec),
-                                            ),
-                                          )
-                                          .toList(),
+                                  items: [
+                                    const DropdownMenuItem<String>(
+                                      
+                                      value: null,
+                                      child: Text('Select Specialization'),
+                                    ),
+                                    ..._specializations
+                                        .map(
+                                          (spec) => DropdownMenuItem(
+                                            value: spec,
+                                            child: Text(spec),
+                                          ),
+                                        )
+                                        .toList(),
+                                  ],
                                   onChanged: (value) {
-                                    if (value != null) {
-                                      setState(
-                                        () => _selectedSpecialization = value,
-                                      );
-                                    }
+                                    setState(() {
+                                      _selectedSpecialization = value;
+                                    });
                                   },
+                                  validator:
+                                      (value) =>
+                                          value == null
+                                              ? 'Please select a specialization'
+                                              : null,
                                 ),
                                 const SizedBox(height: 16),
                                 CustomMultilineTextField(

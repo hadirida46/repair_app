@@ -219,7 +219,7 @@ class _CreateReportState extends State<CreateReport> {
       request.fields['specialist_type'] = _selectedSpecialization!;
     } else {
       _showErrorSnackBar('Please select a specialization.');
-      return; 
+      return;
     }
 
     for (var imageFile in _selectedImages) {
@@ -240,11 +240,17 @@ class _CreateReportState extends State<CreateReport> {
       var responseBody = await response.stream.bytesToString();
       if (response.statusCode == 201) {
         final responseData = json.decode(responseBody);
-        _showSuccessSnackBar('Report created successfully!');
+        debugPrint('API Response Body: $responseBody');
 
+        // Extract the report ID correctly
+        final int newReportId = responseData['report']['id'];
+
+        _showSuccessSnackBar('Report created successfully!');
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const SpecialistList()),
+          MaterialPageRoute(
+            builder: (context) => SpecialistList(reportId: newReportId),
+          ),
         );
       } else {
         _showErrorSnackBar(
@@ -313,7 +319,7 @@ class _CreateReportState extends State<CreateReport> {
                             DropdownButtonFormField<String>(
                               value: _selectedSpecialization,
                               decoration: const InputDecoration(
-                                labelText: 'Specialization',
+                                labelText: 'Issue-type',
                                 labelStyle: TextStyle(color: primaryOrange),
                                 prefixIcon: Icon(
                                   Icons.build,
@@ -351,7 +357,6 @@ class _CreateReportState extends State<CreateReport> {
                                 }
                               },
                             ),
-                            const SizedBox(height: 16),
                             const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -4,6 +4,11 @@ import '/widgets/report_status.dart';
 import 'specialist_list.dart';
 import 'job_tracking.dart';
 import 'feedback.dart';
+import '../../constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:intl/intl.dart';
 
 class MyReports extends StatefulWidget {
   const MyReports({super.key});
@@ -15,45 +20,54 @@ class MyReports extends StatefulWidget {
 class _MyReportsState extends State<MyReports> {
   static const Color primaryOrange = Color(0xFFFFA726);
 
-  final List<Map<String, String>> _reports = [
-    {
-      'title': 'Broken Window',
-      'date': '2024-07-20',
-      'status': 'Waiting For Confirmation',
-      'description': 'A window in the living room is broken.',
-    },
-    {
-      'title': 'Leaking Sink',
-      'date': '2024-07-21',
-      'status': 'In Progress',
-      'description': 'The kitchen sink is leaking water.',
-    },
-    {
-      'title': 'Electrical Shortage',
-      'date': '2024-07-22',
-      'status': 'Completed',
-      'description': 'There’s an electrical shortage in the office.',
-    },
-    {
-      'title': 'Cracked Wall',
-      'date': '2024-07-23',
-      'status': 'Rejected',
-      'description': 'A crack in the wall needs repair.',
-    },
-    {
-      'title': 'Roof Damage',
-      'date': '2024-07-24',
-      'status': 'Escalated',
-      'description':
-          'There’s significant roof damage that needs urgent repair.',
-    },
-    {
-      'title': 'Clogged Drain',
-      'date': '2024-07-25',
-      'status': 'In Progress',
-      'description': 'The bathroom drain is clogged and needs attention.',
-    },
-  ];
+  List<dynamic> _reports = [];
+
+  final storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchReports();
+  }
+
+  Future<void> fetchReports() async {
+    final token = await storage.read(key: 'auth_token');
+    debugPrint('Token: $token');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/reports'),
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+
+    debugPrint('Response status: ${response.statusCode}');
+    debugPrint('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      debugPrint('Response Data: $data');
+
+      setState(() {
+        _reports = data['reports'] ?? [];
+      });
+    } else {
+      debugPrint('Failed to load reports: ${response.body}');
+    }
+  }
+
+  Future<void> _deleteReportFromApi(int reportId) async {
+    final token = await storage.read(key: 'auth_token');
+    final response = await http.delete(
+      Uri.parse('$baseUrl/reports/$reportId'),
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      debugPrint('Report deleted successfully');
+      fetchReports();
+    } else {
+      debugPrint('Failed to delete report: ${response.body}');
+    }
+  }
 
   void _handleReportNavigation(String status) {
     if (status == 'In Progress') {
@@ -67,10 +81,9 @@ class _MyReportsState extends State<MyReports> {
         MaterialPageRoute(builder: (context) => const FeedbackPage()),
       );
     }
-    // Remove the else block if no other action is needed
   }
 
-  Future<void> _showDeleteConfirmation(int index) async {
+  Future<void> _showDeleteConfirmation(int index, int reportId) async {
     bool confirmDelete = false;
     await showDialog(
       context: context,
@@ -98,6 +111,7 @@ class _MyReportsState extends State<MyReports> {
     );
 
     if (confirmDelete) {
+      await _deleteReportFromApi(reportId);
       setState(() {
         _reports.removeAt(index);
       });
@@ -116,22 +130,27 @@ class _MyReportsState extends State<MyReports> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: Icon(Icons.delete, color: Colors.red),
+                  leading: const Icon(Icons.delete, color: Colors.red),
                   title: const Text('Delete Report'),
                   onTap: () {
-                    Navigator.pop(context); // Close dialog
-                    _showDeleteConfirmation(index);
+                    Navigator.pop(context);
+                    final int reportId =
+                        int.tryParse(reportData['id'] ?? '') ?? 0;
+                    _showDeleteConfirmation(index, reportId);
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.search, color: primaryOrange),
+                  leading: const Icon(Icons.search, color: primaryOrange),
                   title: const Text('Search for New Specialist'),
                   onTap: () {
-                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context);
+                    final int reportId =
+                        int.tryParse(reportData['id'] ?? '') ?? 0;
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const SpecialistList(),
+                        builder:
+                            (context) => SpecialistList(reportId: reportId),
                       ),
                     );
                   },
@@ -142,113 +161,165 @@ class _MyReportsState extends State<MyReports> {
         },
       );
     }
-  }
-
+  } 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          const CustomAppBar(title: 'My Reports'),
-          SliverPadding(
-            padding: const EdgeInsets.all(20.0),
-            sliver:
-                _reports.isEmpty
-                    ? const SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: Center(
-                          child: Text(
-                            "No reports yet",
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: primaryOrange,
+      body: RefreshIndicator(
+        onRefresh: fetchReports,
+        child: CustomScrollView(
+          slivers: [
+            const CustomAppBar(title: 'My Reports'),
+            SliverPadding(
+              padding: const EdgeInsets.all(20.0),
+              sliver:
+                  _reports.isEmpty
+                      ? const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Center(
+                            child: Text(
+                              "No reports yet",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: primaryOrange,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    )
-                    : SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final report = _reports[index];
-                        return GestureDetector(
-                          onTap:
-                              () => _handleReportNavigation(
-                                report['status'] ?? 'Unknown',
+                      )
+                      : SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final report = _reports[index];
+                          debugPrint('Rendering Report: $report');
+                          String formattedDate = '';
+                          if (report['created_at'] != null &&
+                              report['created_at'].isNotEmpty) {
+                            try {
+                              formattedDate = DateFormat(
+                                'yyyy-MM-dd',
+                              ).format(DateTime.parse(report['created_at']));
+                            } catch (e) {
+                              formattedDate = 'No Date';
+                            }
+                          } else {
+                            formattedDate = 'No Date';
+                          }
+                          return GestureDetector(
+                            onTap:
+                                () => _handleReportNavigation(
+                                  report['status'] ?? 'Unknown',
+                                ),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    spreadRadius: 1,
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
-
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  spreadRadius: 1,
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  report['title'] ?? 'No Title',
-                                  style: TextStyle(
-                                    fontSize: 25,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryOrange,
-                                    fontStyle: FontStyle.italic,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    report['title'] ?? 'No Title',
+                                    style: TextStyle(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryOrange,
+                                      fontStyle: FontStyle.italic,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Date: ${report['date'] ?? 'No Date'}',
-                                  style: const TextStyle(
-                                    fontStyle: FontStyle.italic,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Date: $formattedDate',
+                                    style: const TextStyle(
+                                      fontStyle: FontStyle.italic,
+                                    ),
                                   ),
-                                ),
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Status: ',
-                                      style: TextStyle(
-                                        fontStyle: FontStyle.italic,
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Status: ',
+                                        style: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                        ),
                                       ),
-                                    ),
-                                    ReportStatus(
-                                      status: report['status'] ?? 'Unknown',
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Description: ${report['description'] ?? 'No Description'}',
-                                  style: const TextStyle(
-                                    fontStyle: FontStyle.italic,
+                                      ReportStatus(
+                                        status: report['status'] ?? 'Unknown',
+                                      ),
+                                    ],
                                   ),
-                                  softWrap: true,
-                                ),
-                                if (report['status'] != 'Completed' &&
-                                    report['status'] != 'In Progress')
-                                  IconButton(
-                                    icon: const Icon(Icons.more_vert),
-                                    onPressed: () {
-                                      _showReportMenu(index, report);
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Description: ${report['description'] ?? 'No Description'}',
+                                    style: const TextStyle(
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                    softWrap: true,
+                                  ),
+                                  PopupMenuButton<String>(
+                                    onSelected: (value) {
+                                      if (value == 'delete') {
+                                        final int reportId =
+                                            int.tryParse(
+                                              report['id']?.toString() ?? '',
+                                            ) ??
+                                            0;
+                                        _showDeleteConfirmation(
+                                          index,
+                                          reportId,
+                                        );
+                                      } else if (value == 'assign') {
+                                        final int reportId =
+                                            int.tryParse(
+                                              report['id']?.toString() ?? '',
+                                            ) ??
+                                            0;
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) => SpecialistList(
+                                                  reportId: reportId,
+                                                ),
+                                          ),
+                                        );
+                                      }
                                     },
+                                    itemBuilder:
+                                        (BuildContext context) =>
+                                            <PopupMenuEntry<String>>[
+                                              const PopupMenuItem<String>(
+                                                value: 'assign',
+                                                child: Text(
+                                                  'Search for New Specialist',
+                                                ),
+                                              ),
+                                              const PopupMenuItem<String>(
+                                                value: 'delete',
+                                                child: Text('Delete Report'),
+                                              ),
+                                            ],
+                                    icon: const Icon(Icons.more_vert),
                                   ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      }, childCount: _reports.length),
-                    ),
-          ),
-        ],
+                          );
+                        }, childCount: _reports.length),
+                      ),
+            ),
+          ],
+        ),
       ),
     );
   }
