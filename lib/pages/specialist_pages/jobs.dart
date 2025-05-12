@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import '/widgets/custom_appbar.dart';
-import 'job.dart'; // For 'waiting' jobs
-import 'job_progress.dart'; // For 'in_progress' jobs
+import 'job.dart';
+import 'job_progress.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../constants.dart';
+
+const Color primaryOrange = Color(0xFFFFA726);
 
 class SpecialistJobs extends StatefulWidget {
   const SpecialistJobs({super.key});
@@ -11,53 +17,48 @@ class SpecialistJobs extends StatefulWidget {
 }
 
 class _SpecialistJobsState extends State<SpecialistJobs> {
-  static const Color primaryOrange = Color(0xFFFFA726);
+  List<Map<String, dynamic>> _reports = [];
+  bool _isLoading = true;
+  @override
+  void initState() {
+    super.initState();
+    fetchReports();
+  }
 
-  final List<Map<String, String>> _jobs = [
-    {
-      'title': 'Broken Window',
-      'date': '2024-07-20',
-      'location': 'Beirut - Hamra',
-      'description': 'A window in the living room is broken.',
-      'status': 'waiting',
-    },
-    {
-      'title': 'Leaking Sink',
-      'date': '2024-07-21',
-      'location': 'Beirut - Verdun',
-      'description': 'The kitchen sink is leaking water.',
-      'status': 'in_progress',
-    },
-    {
-      'title': 'Electrical Shortage',
-      'date': '2024-07-22',
-      'location': 'Beirut - Ashrafieh',
-      'description': 'There’s an electrical shortage in the office.',
-      'status': 'waiting',
-    },
-    {
-      'title': 'Cracked Wall',
-      'date': '2024-07-23',
-      'location': 'Beirut - Downtown',
-      'description': 'A crack in the wall needs repair.',
-      'status': 'in_progress',
-    },
-    {
-      'title': 'Roof Damage',
-      'date': '2024-07-24',
-      'location': 'Beirut - Tallet El Khayyat',
-      'description':
-          'There’s significant roof damage that needs urgent repair.',
-      'status': 'waiting',
-    },
-    {
-      'title': 'Clogged Drain',
-      'date': '2024-07-25',
-      'location': 'Beirut - Cola',
-      'description': 'The bathroom drain is clogged and needs attention.',
-      'status': 'in_progress',
-    },
-  ];
+  Future<void> fetchReports() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'auth_token');
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/reports/assigned'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List reports = data['reports'];
+        setState(() {
+  _reports = List<Map<String, dynamic>>.from(reports);
+  _isLoading = false;
+});
+
+      } else {
+        print("Failed to load jobs: ${response.body}");
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error: $e");
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +69,7 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
           SliverPadding(
             padding: const EdgeInsets.all(20.0),
             sliver:
-                _jobs.isEmpty
+                _reports.isEmpty
                     ? const SliverFillRemaining(
                       hasScrollBody: false,
                       child: Center(
@@ -80,23 +81,23 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
                     )
                     : SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
-                        final job = _jobs[index];
-                        final String status = job['status'] ?? 'waiting';
+                        final report = _reports[index];
+                        final String status = report['status'] ?? 'waiting';
                         final bool isInProgress = status == 'in_progress';
 
                         return InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) =>
-                                        isInProgress
-                                            ? JobProgressPage(job: job)
-                                            : JobPage(job: job),
-                              ),
-                            );
-                          },
+                          // onTap: () {
+                          //   Navigator.push(
+                          //     context,
+                          //     MaterialPageRoute(
+                          //       builder:
+                          //           (context) =>
+                          //               isInProgress
+                          //                   ? JobProgressPage(job: report)
+                          //                   : JobPage(job: report),
+                          //     ),
+                          //   );
+                          // },
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
@@ -120,7 +121,7 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      job['title'] ?? 'No Title',
+                                      report['title'] ?? 'No Title',
                                       style: TextStyle(
                                         fontSize: 25,
                                         fontWeight: FontWeight.bold,
@@ -155,20 +156,20 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Date: ${job['date'] ?? 'No Date'}',
+                                  'Date: ${report['date'] ?? 'No Date'}',
                                   style: const TextStyle(
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
                                 Text(
-                                  'Location: ${job['location'] ?? 'Unknown'}',
+                                  'Location: ${report['location'] ?? 'Unknown'}',
                                   style: const TextStyle(
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Description: ${job['description'] ?? 'No Description'}',
+                                  'Description: ${report['description'] ?? 'No Description'}',
                                   style: const TextStyle(
                                     fontStyle: FontStyle.italic,
                                   ),
@@ -178,7 +179,7 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
                             ),
                           ),
                         );
-                      }, childCount: _jobs.length),
+                      }, childCount: _reports.length),
                     ),
           ),
         ],

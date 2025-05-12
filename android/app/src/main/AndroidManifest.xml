@@ -7,6 +7,9 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- 👇 Permission for accessing the internet -->
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- Add this line -->
+
     <application
         android:label="repair_app"
         android:name="${applicationName}"

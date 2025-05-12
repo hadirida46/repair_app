@@ -242,7 +242,6 @@ class _CreateReportState extends State<CreateReport> {
         final responseData = json.decode(responseBody);
         debugPrint('API Response Body: $responseBody');
 
-        // Extract the report ID correctly
         final int newReportId = responseData['report']['id'];
 
         _showSuccessSnackBar('Report created successfully!');
@@ -376,7 +375,7 @@ class _CreateReportState extends State<CreateReport> {
                                       _useDefaultLocation = value;
                                       debugPrint(
                                         'Switch toggled, value: $value, _defaultLocationText: $_defaultLocationText',
-                                      ); // ADD THIS LINE
+                                      );
                                       if (value &&
                                           _defaultLocationText.isNotEmpty) {
                                         debugPrint(

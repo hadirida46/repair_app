@@ -10,22 +10,22 @@ class ReportStatus extends StatelessWidget {
     Color color;
 
     switch (status) {
-      case 'Waiting':
+      case 'waiting':
         color = Colors.grey;
         break;
-      case 'Escalated':
+      case 'wscalated':
         color = Colors.grey;
         break;
-      case 'Accepted':
+      case 'accepted':
         color = Colors.orange;
         break;
-      case 'Rejected':
+      case 'rejected':
         color = Colors.red;
         break;
-      case 'In Progress':
+      case 'in progress':
         color = Colors.blue;
         break;
-      case 'Completed':
+      case 'completed':
         color = Colors.green;
         break;
       default:
@@ -46,9 +46,3 @@ class ReportStatus extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
