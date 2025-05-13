@@ -322,17 +322,25 @@ class _SCreateReportState extends State<SCreateReport>
     }
   }
 
-  void _handleReportNavigation(String status) {
-    if (status == 'In Progress') {
+  void _handleReportNavigation(Map<String, dynamic> report) {
+    final status = report['status'];
+    final reportId = report['id'];
+    if (status == 'in progress' && reportId != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => JobTrackingPage()),
+        MaterialPageRoute(builder: (context) => JobTrackingPage(job: report)),
       );
-    } else if (status == 'Completed') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const FeedbackPage()),
-      );
+    } else if (status == 'completed' && reportId != null) {
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => FeedbackPage(reportId: reportId as int),
+      //   ),
+      // );
+    } else if (status == 'rejected' ||
+        status == 'waiting' ||
+        status == 'escalated') {
+      _showReportMenu(report);
     }
   }
 
@@ -371,49 +379,50 @@ class _SCreateReportState extends State<SCreateReport>
     }
   }
 
-  void _showReportMenu(int index, Map<String, String> reportData) async {
-    if (reportData['status'] != 'Completed' &&
-        reportData['status'] != 'In Progress') {
-      await showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text(reportData['title'] ?? 'Report Menu'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text('Delete Report'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    final int reportId =
-                        int.tryParse(reportData['id'] ?? '') ?? 0;
+  void _showReportMenu(Map<String, dynamic> reportData) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(reportData['title'] ?? 'Report Menu'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Delete Report'),
+                onTap: () {
+                  Navigator.pop(context);
+                  final int? reportId = reportData['id'];
+                  final int index = _reports.indexOf(reportData);
+                  if (reportId != null && index != -1) {
                     _showDeleteConfirmation(index, reportId);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.search, color: primaryOrange),
-                  title: const Text('Search for New Specialist'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    final int reportId =
-                        int.tryParse(reportData['id'] ?? '') ?? 0;
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.search, color: primaryOrange),
+                title: const Text('Search for New Specialist'),
+                onTap: () {
+                  Navigator.pop(context);
+                  final int? reportId = reportData['id'];
+                  if (reportId != null) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder:
-                            (context) => SpecialistList(reportId: reportId),
+                            (context) =>
+                                SpecialistList(reportId: reportId as int),
                       ),
                     );
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    }
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -776,10 +785,7 @@ class _SCreateReportState extends State<SCreateReport>
                                 }
 
                                 return GestureDetector(
-                                  onTap:
-                                      () => _handleReportNavigation(
-                                        report['status'] ?? 'Unknown',
-                                      ),
+                                  onTap: () => _handleReportNavigation(report),
                                   child: Container(
                                     margin: const EdgeInsets.only(bottom: 12),
                                     padding: const EdgeInsets.all(16),
@@ -836,49 +842,6 @@ class _SCreateReportState extends State<SCreateReport>
                                             fontStyle: FontStyle.italic,
                                           ),
                                           softWrap: true,
-                                        ),
-                                        PopupMenuButton<String>(
-                                          onSelected: (value) {
-                                            final int reportId =
-                                                int.tryParse(
-                                                  report['id']?.toString() ??
-                                                      '',
-                                                ) ??
-                                                0;
-                                            if (value == 'delete') {
-                                              _showDeleteConfirmation(
-                                                index,
-                                                reportId,
-                                              );
-                                            } else if (value == 'assign') {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder:
-                                                      (context) =>
-                                                          SpecialistList(
-                                                            reportId: reportId,
-                                                          ),
-                                                ),
-                                              );
-                                            }
-                                          },
-                                          itemBuilder:
-                                              (
-                                                BuildContext context,
-                                              ) => <PopupMenuEntry<String>>[
-                                                const PopupMenuItem<String>(
-                                                  value: 'assign',
-                                                  child: Text(
-                                                    'Search for New Specialist',
-                                                  ),
-                                                ),
-                                                const PopupMenuItem<String>(
-                                                  value: 'delete',
-                                                  child: Text('Delete Report'),
-                                                ),
-                                              ],
-                                          icon: const Icon(Icons.more_vert),
                                         ),
                                       ],
                                     ),

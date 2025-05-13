@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../constants.dart';
+import 'package:intl/intl.dart';
 
 const Color primaryOrange = Color(0xFFFFA726);
 
@@ -16,13 +17,37 @@ class SpecialistJobs extends StatefulWidget {
   State<SpecialistJobs> createState() => _SpecialistJobsState();
 }
 
-class _SpecialistJobsState extends State<SpecialistJobs> {
+class _SpecialistJobsState extends State<SpecialistJobs>
+    with WidgetsBindingObserver {
   List<Map<String, dynamic>> _reports = [];
   bool _isLoading = true;
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'No Date';
+    try {
+      return DateFormat('yyyy-MM-dd').format(DateTime.parse(dateStr));
+    } catch (e) {
+      return 'Invalid Date';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     fetchReports();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      fetchReports();
+    }
   }
 
   Future<void> fetchReports() async {
@@ -42,10 +67,9 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
         final data = jsonDecode(response.body);
         final List reports = data['reports'];
         setState(() {
-  _reports = List<Map<String, dynamic>>.from(reports);
-  _isLoading = false;
-});
-
+          _reports = List<Map<String, dynamic>>.from(reports);
+          _isLoading = false;
+        });
       } else {
         print("Failed to load jobs: ${response.body}");
         setState(() {
@@ -62,6 +86,10 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -82,22 +110,36 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
                     : SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final report = _reports[index];
-                        final String status = report['status'] ?? 'waiting';
-                        final bool isInProgress = status == 'in_progress';
+                        final String status = report['status'];
+                        final bool isInProgress = status == 'in progress';
+                        final String formattedDate = _formatDate(
+                          report['created_at'],
+                        );
+
+                        if (status != 'waiting' && !isInProgress) {
+                          return const SizedBox.shrink();
+                        }
+                        final imageUrl =
+                            report['images'] != null &&
+                                    report['images'].isNotEmpty
+                                ? report['images'][0] 
+                                : 'https://example.com/fallback_image.jpg'; 
 
                         return InkWell(
-                          // onTap: () {
-                          //   Navigator.push(
-                          //     context,
-                          //     MaterialPageRoute(
-                          //       builder:
-                          //           (context) =>
-                          //               isInProgress
-                          //                   ? JobProgressPage(job: report)
-                          //                   : JobPage(job: report),
-                          //     ),
-                          //   );
-                          // },
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        isInProgress
+                                            ? JobProgressPage(job: report)
+                                            : JobPage(job: report),
+                              ),
+                            ).then((_) {
+                              fetchReports();
+                            });
+                          },
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
@@ -122,7 +164,7 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
                                   children: [
                                     Text(
                                       report['title'] ?? 'No Title',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 25,
                                         fontWeight: FontWeight.bold,
                                         color: primaryOrange,
@@ -156,7 +198,7 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Date: ${report['date'] ?? 'No Date'}',
+                                  'Date: $formattedDate',
                                   style: const TextStyle(
                                     fontStyle: FontStyle.italic,
                                   ),
@@ -174,6 +216,18 @@ class _SpecialistJobsState extends State<SpecialistJobs> {
                                     fontStyle: FontStyle.italic,
                                   ),
                                   softWrap: true,
+                                ),
+                                const SizedBox(height: 8),
+                                Image.network(
+                                  imageUrl, 
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Text('Image failed to load.'),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
