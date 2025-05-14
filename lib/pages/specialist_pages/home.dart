@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '/widgets/custom_appbar.dart';
 import '/widgets/expert_card.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../constants.dart';
+import 'package:http/http.dart' as http;
 
 const Color primaryOrange = Color(0xFFFF9800);
 
@@ -39,28 +42,10 @@ class _SpecialistHomeState extends State<SpecialistHome> {
     },
   ];
 
-  final List<Map<String, String>> _testimonials = [
-    {
-      'quote':
-          'John fixed my office wall in no time. Super professional and polite.”',
-      'author': '- Rana K.',
-    },
-    {
-      'quote': '“Booking a plumber was so easy! Got help the same day.”',
-      'author': '- Ali H.',
-    },
-    {
-      'quote':
-          '“Really impressed by how fast John arrived and fixed our lights.”',
-      'author': '- Mira S.',
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
     _startAutoScroll();
-    _startTestimonialScroll();
   }
 
   void _startAutoScroll() {
@@ -71,24 +56,6 @@ class _SpecialistHomeState extends State<SpecialistHome> {
         });
         _pageController.animateToPage(
           _currentPage,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  void _startTestimonialScroll() {
-    _testimonialTimer = Timer.periodic(const Duration(seconds: 6), (
-      Timer timer,
-    ) {
-      if (_testimonialController.hasClients) {
-        setState(() {
-          _currentTestimonial =
-              (_currentTestimonial + 1) % _testimonials.length;
-        });
-        _testimonialController.animateToPage(
-          _currentTestimonial,
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeInOut,
         );
@@ -167,7 +134,7 @@ class _SpecialistHomeState extends State<SpecialistHome> {
                         ),
                         const SizedBox(height: 25),
                         Text(
-                          "My Work",
+                          "Our Work",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -243,57 +210,7 @@ class _SpecialistHomeState extends State<SpecialistHome> {
                           ),
                         ),
                         const SizedBox(height: 30),
-                        Text(
-                          "About Me",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: primaryOrange,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          height: 100,
-                          child: PageView.builder(
-                            controller: _testimonialController,
-                            itemCount: _testimonials.length,
-                            itemBuilder: (context, index) {
-                              final testimonial = _testimonials[index];
-                              return Container(
-                                padding: const EdgeInsets.all(15),
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: primaryOrange.withOpacity(0.4),
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      testimonial['quote']!,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      testimonial['author']!,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+
                         const SizedBox(height: 30),
                         Text(
                           "Nearby Mates 📍",
@@ -335,9 +252,7 @@ class _SpecialistHomeState extends State<SpecialistHome> {
                               right: 0,
                               top: 10,
                               child: GestureDetector(
-                                onTap: () {
-                                  // Add scroll logic if needed
-                                },
+                                onTap: () {},
                                 child: Container(
                                   padding: const EdgeInsets.all(8.0),
                                   decoration: BoxDecoration(

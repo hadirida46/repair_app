@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Chat extends StatefulWidget {
   const Chat({super.key});
@@ -17,14 +19,12 @@ class _ChatState extends State<Chat> {
 
     setState(() {
       _messages.add({
-        'sender':
-            'User', // You can later change it based on who sends the message
+        'sender': 'User',
         'text': text,
         'timestamp': TimeOfDay.now().format(context),
       });
     });
     _messageController.clear();
-    // Here you can also call your backend API
   }
 
   @override

@@ -21,7 +21,6 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> {
-  // --- State Variables ---
   XFile? _image;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _firstNameController = TextEditingController();
@@ -30,22 +29,14 @@ class _UserProfileState extends State<UserProfile> {
   final TextEditingController _locationController = TextEditingController();
   double? _latitude;
   double? _longitude;
-  String? _profileImageUrl; // To store the URL from the backend
-  final _storage = const FlutterSecureStorage(); // Secure storage for token
-  String? _token; // Store the auth token
+  String? _profileImageUrl;
+  final _storage = const FlutterSecureStorage(); 
+  String? _token; 
   bool _isLoading =
-      false; // Track loading state for showing progress indicators
+      false; 
 
-  // --- API Constants ---
-  //Moved to constants.dart
-  //final String _baseUrl =
-  //    'http://your_laravel_api_url/api'; // Replace with your API base URL
-
-  // --- Helper Methods ---
-
-  // Show a red snackbar for error messages
   void _showRedSnackBar(String message) {
-    if (!mounted) return; // Check if the widget is still in the tree
+    if (!mounted) return; 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -63,9 +54,8 @@ class _UserProfileState extends State<UserProfile> {
     );
   }
 
-  // Show a green snackbar for success messages
   void _showGreenSnackBar(String message) {
-    if (!mounted) return; // Check if the widget is still in the tree
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -83,7 +73,6 @@ class _UserProfileState extends State<UserProfile> {
     );
   }
 
-  // Validate password (basic validation)
   bool _validatePassword(String password) {
     final hasMinLength = password.length >= 8;
     final hasUppercase = RegExp(r'[A-Z]').hasMatch(password);
@@ -91,14 +80,11 @@ class _UserProfileState extends State<UserProfile> {
     return password.isNotEmpty && hasMinLength && hasUppercase && hasNumber;
   }
 
-  // --- API Interaction Methods ---
-
-  // Get the authentication token from secure storage
   Future<void> _getToken() async {
     try {
       _token = await _storage.read(key: 'auth_token');
       if (_token == null) {
-        // Handle the case where the token is not available (e.g., redirect to login)
+        
         _showRedSnackBar(
           'You are not logged in. Please log in to view your profile.',
         );
@@ -106,7 +92,7 @@ class _UserProfileState extends State<UserProfile> {
           context,
           MaterialPageRoute(
             builder: (_) => SplashScreen(),
-          ), // Or your login page
+          ), 
           (route) => false,
         );
       }
@@ -120,24 +106,23 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
-  // Fetch user profile data from the API
   Future<void> _fetchUserProfile() async {
     if (_token == null) {
-      await _getToken(); // Ensure we have the token
-      if (_token == null) return; // Important:  Exit if token is still null
+      await _getToken(); 
+      if (_token == null) return; 
     }
     setState(() {
       _isLoading = true;
-    }); // Start loading
+    }); 
     final url = Uri.parse(
       '$baseUrl/profile',
-    ); // Use the baseUrl from constants.dart
+    ); 
     try {
       final response = await http.get(
         url,
         headers: {
-          'Authorization': 'Bearer $_token', // Use the stored token
-          'Accept': 'application/json', // Important for Laravel API
+          'Authorization': 'Bearer $_token', 
+          'Accept': 'application/json', 
         },
       );
 
@@ -161,30 +146,28 @@ class _UserProfileState extends State<UserProfile> {
       } else {
         _showRedSnackBar(
           'Failed to load profile: ${response.statusCode}',
-        ); // Show error
+        ); 
         debugPrint('Failed to fetch profile: ${response.body}');
       }
     } catch (error) {
-      _showRedSnackBar('Error: $error'); // Show error
+      _showRedSnackBar('Error: $error'); 
       debugPrint('Error fetching profile: $error');
     } finally {
       if (mounted) {
-        //check
         setState(() {
-          _isLoading = false; // Stop loading regardless of success or failure
+          _isLoading = false; 
         });
       }
     }
   }
 
-  // Update user profile data via the API
   Future<void> _updateUserProfile() async {
     if (_token == null) {
       await _getToken();
-      if (_token == null) return; // Exit if no token
+      if (_token == null) return; 
     }
     if (!_formKey.currentState!.validate()) {
-      return; // Stop if the form is not valid
+      return;
     }
 
     setState(() {
@@ -214,13 +197,12 @@ class _UserProfileState extends State<UserProfile> {
           final bytes = await file.readAsBytes();
           final image = img.decodeImage(bytes);
           if (image != null) {
-            // Resize the image (optional)
             final resizedImage = img.copyResize(
               image,
               width: 800,
-            ); // Adjust width as needed
+            ); 
 
-            // Compress the image
+            
             final compressedImageBytes = img.encodeJpg(
               resizedImage,
               quality: 70,
@@ -250,16 +232,16 @@ class _UserProfileState extends State<UserProfile> {
         }
       }
 
-      final streamedResponse = await request.send(); // Use send()
+      final streamedResponse = await request.send(); 
       final response = await http.Response.fromStream(
         streamedResponse,
       ); //convert
 
-      final responseBody = response.body; //get body
+      final responseBody = response.body;
 
       if (response.statusCode == 200) {
         _showGreenSnackBar('Profile updated successfully!');
-        _fetchUserProfile(); //re-fetch
+        _fetchUserProfile(); 
       } else {
         _showRedSnackBar('Failed to update profile: ${response.statusCode}');
         debugPrint('Failed to update profile: $responseBody');
@@ -276,7 +258,6 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
-  // Log the user out via the API
   Future<void> _logout() async {
     if (_token == null) {
       await _getToken();
@@ -293,10 +274,7 @@ class _UserProfileState extends State<UserProfile> {
       );
 
       if (response.statusCode == 200) {
-        // Clear the token from secure storage
         await _storage.delete(key: 'auth_token');
-        _showGreenSnackBar('Logged out successfully.');
-        // Redirect to the splash screen (or login)
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => SplashScreen()),

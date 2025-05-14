@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../widgets/multiline_text_field.dart';
+import '../../constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 const primaryOrange = Color(0xFFFF9800);
 
 class FeedbackPage extends StatefulWidget {
-  const FeedbackPage({super.key});
+  final int reportId;
+  final int specialistId;
+
+  const FeedbackPage({
+    super.key,
+    required this.reportId,
+    required this.specialistId,
+  });
 
   @override
   State<FeedbackPage> createState() => _FeedbackPageState();
@@ -12,8 +23,8 @@ class FeedbackPage extends StatefulWidget {
 
 class _FeedbackPageState extends State<FeedbackPage> {
   final TextEditingController _feedbackController = TextEditingController();
-
-  void _submitFeedback() {
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
+  void _submitFeedback() async {
     final feedback = _feedbackController.text.trim();
     if (feedback.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -23,15 +34,56 @@ class _FeedbackPageState extends State<FeedbackPage> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Thank you for your feedback!'),
-          backgroundColor: primaryOrange,
-        ),
+      final response = await submitFeedbackToBackend(
+        reportId: widget.reportId,
+        specialistId: widget.specialistId,
+        comment: feedback,
       );
-      _feedbackController.clear();
-      Navigator.pop(context); // Go back after submission
+
+      if (response != null && response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Thank you for your feedback!'),
+            backgroundColor: primaryOrange,
+          ),
+        );
+        _feedbackController.clear();
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to submit feedback. ${response?.body ?? 'Please try again.'}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
+  }
+
+  Future<http.Response?> submitFeedbackToBackend({
+    required int reportId,
+    required int specialistId,
+    required String comment,
+  }) async {
+    final token = await storage.read(key: 'auth_token');
+    final url = Uri.parse('$baseUrl/feedback');
+
+    // Send the request
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({'specialist_id': specialistId, 'comment': comment}),
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    return response;
   }
 
   @override

@@ -31,33 +31,68 @@ class _JobProgressPageState extends State<JobProgressPage> {
     _loadExistingProgress();
   }
 
+  Future<void> _updateJobStatus(String status) async {
+    final reportId = widget.job['id'];
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'auth_token');
+
+    if (token == null) {
+      return _showErrorSnackBar('User is not authenticated.');
+    }
+
+    final uri = Uri.parse('$baseUrl/reports/$reportId/status');
+
+    try {
+      final response = await http.patch(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'status': status}),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Job marked as $status!'),
+            backgroundColor: status == 'completed' ? Colors.green : Colors.red,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        _showErrorSnackBar('Failed to update job status.');
+      }
+    } catch (error) {
+      _showErrorSnackBar('Failed to update job status: $error');
+    }
+  }
+
   Future<void> _loadExistingProgress() async {
     final progressData = await _fetchProgressUpdates();
     setState(() {
       _existingProgress = progressData;
-    });
-    _originalImages.clear();
-    _compressedImages.clear();
-    _commentControllers.clear();
-    _specialistComments.clear();
-    _commentAdded.clear();
+      _originalImages.clear();
+      _compressedImages.clear();
+      _commentControllers.clear();
+      _specialistComments.clear();
+      _commentAdded.clear();
 
-    for (var item in _existingProgress) {
-      if (item['image_url'] != null) {
-        _originalImages.add(item['image_url']);
-        _compressedImages.add(null);
-        _commentControllers.add(
-          TextEditingController(text: item['user_comment']),
-        );
-        _specialistComments.add(item['specialist_comment'] ?? '');
-        _commentAdded.add(
-          (item['user_comment'] != null && item['user_comment'].isNotEmpty) ||
-              (item['specialist_comment'] != null &&
-                  item['specialist_comment'].isNotEmpty),
-        );
+      for (var item in _existingProgress) {
+        if (item['image_url'] != null) {
+          _originalImages.add(item['image_url']);
+          _compressedImages.add(null);
+          _commentControllers.add(
+            TextEditingController(text: item['user_comment']),
+          );
+          _specialistComments.add(item['specialist_comment'] ?? '');
+          _commentAdded.add(
+            item['user_comment']?.isNotEmpty == true ||
+                item['specialist_comment']?.isNotEmpty == true,
+          );
+        }
       }
-    }
-    _syncCommentAndSpecialistLists();
+    });
   }
 
   Future<List<dynamic>> _fetchProgressUpdates() async {
@@ -108,22 +143,11 @@ class _JobProgressPageState extends State<JobProgressPage> {
     final file = _compressedImages[index] ?? _originalImages[index];
     final comment = _commentControllers[index].text;
     final reportId = widget.job['id'];
-
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'auth_token');
-
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User is not authenticated'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    if (token == null) return _showErrorSnackBar('User is not authenticated.');
 
     final uri = Uri.parse('$baseUrl/reports/$reportId/progress');
-
     final request =
         http.MultipartRequest('POST', uri)
           ..fields['specialist_comment'] = comment
@@ -136,27 +160,15 @@ class _JobProgressPageState extends State<JobProgressPage> {
       contentType: mimeType != null ? MediaType.parse(mimeType) : null,
       filename: path.basename(file.path),
     );
-
     request.files.add(multipartFile);
 
     final response = await request.send();
-
     if (response.statusCode == 200 || response.statusCode == 201) {
-      print('Progress uploaded successfully!');
-      setState(() {
-        _specialistComments[index] = comment;
-        _commentControllers[index].clear();
-        _commentAdded[index] = true;
-      });
+      _commentControllers[index].clear();
+      _commentAdded[index] = true;
       _loadExistingProgress();
     } else {
-      print('Upload failed: ${response.statusCode}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to upload job progress'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showErrorSnackBar('Upload failed.');
     }
   }
 
@@ -204,6 +216,8 @@ class _JobProgressPageState extends State<JobProgressPage> {
     if (_isPickingImage) return;
     _isPickingImage = true;
     final pickedFile = await _picker.pickImage(source: source);
+    _isPickingImage = false;
+
     if (pickedFile != null) {
       final File imageFile = File(pickedFile.path);
       final img.Image? originalImage = img.decodeImage(
@@ -211,10 +225,10 @@ class _JobProgressPageState extends State<JobProgressPage> {
       );
 
       if (originalImage != null) {
-        img.Image resizedImage = img.copyResize(originalImage, width: 800);
-        List<int> compressedBytes = img.encodeJpg(resizedImage, quality: 70);
-        final Directory tempDir = await getTemporaryDirectory();
-        final File compressedFile =
+        final resizedImage = img.copyResize(originalImage, width: 800);
+        final compressedBytes = img.encodeJpg(resizedImage, quality: 70);
+        final tempDir = await getTemporaryDirectory();
+        final compressedFile =
             await File(
               '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
             ).create();
@@ -228,7 +242,7 @@ class _JobProgressPageState extends State<JobProgressPage> {
           _commentAdded.add(false);
         });
       } else {
-        _showErrorSnackBar('Failed to decode the image.');
+        _showErrorSnackBar('Failed to process image.');
       }
     }
   }
@@ -295,12 +309,13 @@ class _JobProgressPageState extends State<JobProgressPage> {
 
   Widget _buildImageGallery() {
     if (_originalImages.isEmpty) {
-      return const Center(child: Text('No progress updates yet.'));
+      return SizedBox(
+        height: MediaQuery.of(context).size.height * 0.5,
+        child: const Center(child: Text('No progress updates yet.')),
+      );
     }
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 20,
+    return Column(
       children:
           _originalImages.asMap().entries.map((entry) {
             final index = entry.key;
@@ -310,92 +325,105 @@ class _JobProgressPageState extends State<JobProgressPage> {
             if (image is String) {
               imageWidget = Image.network(
                 image,
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.width * 0.8,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Icon(Icons.error_outline));
-                },
               );
             } else if (image is File) {
               imageWidget = Image.file(
                 image,
-                width: 100,
-                height: 100,
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.width * 0.8,
                 fit: BoxFit.cover,
               );
             } else {
-              imageWidget = const Center(child: Text('Invalid Image Type'));
+              imageWidget = const Text('Invalid Image');
             }
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SizedBox(
-                        width: 100,
-                        height: 100,
-                        child: imageWidget,
-                      ),
-                    ),
-                    if (image is File)
-                      Positioned(
-                        right: -10,
-                        top: -10,
-                        child: IconButton(
-                          icon: const Icon(Icons.cancel, color: Colors.red),
-                          onPressed: () => _removeImage(index),
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: imageWidget,
                         ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (_specialistComments[index].isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      'Specialist Comment: ${_specialistComments[index]}',
-                      style: const TextStyle(fontStyle: FontStyle.italic),
-                    ),
-                  ),
-                Row(
-                  children: [
-                    if (!_commentAdded[index])
-                      Expanded(
-                        child: TextField(
-                          controller: _commentControllers[index],
-                          decoration: const InputDecoration(
-                            labelText: 'Add your comment',
-                            labelStyle: TextStyle(color: primaryOrange),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: primaryOrange),
+                        if (image is File)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.white70,
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.cancel,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => _removeImage(index),
+                              ),
                             ),
                           ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (_specialistComments[index].isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          'Specialist Comment: ${_specialistComments[index]}',
+                          style: const TextStyle(color: Colors.black87),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                    if (!_commentAdded[index]) const SizedBox(width: 8),
                     if (!_commentAdded[index])
-                      ElevatedButton(
-                        onPressed: () => _uploadProgress(index),
-                        child: const Text('Send'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryOrange,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _commentControllers[index],
+                                decoration: const InputDecoration(
+                                  labelText: 'Add your comment',
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: primaryOrange,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () => _uploadProgress(index),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryOrange,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text('Send'),
+                            ),
+                          ],
                         ),
                       ),
-                    if (_commentAdded[index]) const SizedBox(width: 80),
+                    if (_commentAdded[index]) const SizedBox(height: 40),
                   ],
                 ),
-              ],
+              ),
             );
           }).toList(),
     );
@@ -507,33 +535,27 @@ class _JobProgressPageState extends State<JobProgressPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildActionButton(
-                  icon: Icons.check,
-                  label: 'Complete',
-                  color: Colors.green,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Job marked as completed!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    Navigator.pop(context);
-                  },
-                ),
-                _buildActionButton(
-                  icon: Icons.stop_circle_outlined,
-                  label: 'Stop Job',
-                  color: Colors.red,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Job has been stopped by specialist.'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    Navigator.pop(context);
-                  },
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildActionButton(
+                      icon: Icons.check,
+                      label: 'Complete',
+                      color: Colors.green,
+                      onPressed: () {
+                        _updateJobStatus('completed');
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                    _buildActionButton(
+                      icon: Icons.stop_circle_outlined,
+                      label: 'Stop Job',
+                      color: Colors.red,
+                      onPressed: () {
+                        _updateJobStatus('escalated');
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),

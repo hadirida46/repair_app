@@ -72,24 +72,24 @@ class _MyReportsState extends State<MyReports> {
   void _handleReportNavigation(Map<String, dynamic> report) {
     final status = report['status'];
     final reportId = report['id'];
+    final specialistId = report['specialist_id'];
     if (status == 'in progress' && reportId != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => JobTrackingPage(job: report)),
+      );
+    } else if (status == 'completed' && reportId != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder:
-              (context) => JobTrackingPage(job: report), // Pass the ID directly
+              (context) => FeedbackPage(
+                reportId: reportId as int,
+                specialistId: specialistId as int,
+              ),
         ),
       );
-    }
-    // else if (status == 'completed' && reportId != null) {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (context) => FeedbackPage(reportId: reportId as int),
-    //     ),
-    //   );
-    // }
-    else if (status == 'rejected' ||
+    } else if (status == 'rejected' ||
         status == 'waiting' ||
         status == 'escalated') {
       _showReportMenu(report);

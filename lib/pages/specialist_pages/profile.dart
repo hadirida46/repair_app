@@ -44,11 +44,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
     'handyman',
   ];
 
-  final List<String> _feedbacks = [
-    'Very professional and punctual.',
-    'Fixed my plumbing issue quickly!',
-    'Excellent work, highly recommended.',
-  ];
+  List<dynamic> _specialistFeedbacks = [];
 
   // --- Helper Methods ---
 
@@ -97,7 +93,42 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
     return password.isNotEmpty && hasMinLength && hasUppercase && hasNumber;
   }
 
-  // --- API Interaction Methods ---
+  Future<void> _fetchSpecialistFeedback() async {
+    if (_token == null) {
+      await _getToken();
+      if (_token == null) return;
+    }
+
+    final url = Uri.parse('$baseUrl/feedback/specialist');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        setState(() {
+          _specialistFeedbacks = data['feedbacks'];
+        });
+      } else if (response.statusCode == 404) {
+        setState(() {
+          _specialistFeedbacks = []; // No feedback found
+          _showRedSnackBar(json.decode(response.body)['message']);
+        });
+      } else {
+        _showRedSnackBar('Failed to load feedback: ${response.statusCode}');
+        debugPrint('Failed to fetch feedback: ${response.body}');
+      }
+    } catch (error) {
+      _showRedSnackBar('Error: $error');
+      debugPrint('Error fetching feedback: $error');
+    }
+  }
 
   Future<void> _getToken() async {
     try {
@@ -149,7 +180,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
           _emailController.text = data['email'] ?? '';
           _locationController.text = data['location'] ?? '';
           _bioController.text = data['bio'] ?? '';
-          _selectedSpecialization = data['specialization']; 
+          _selectedSpecialization = data['specialization'];
           _latitude =
               data['latitude'] != null
                   ? double.tryParse(data['latitude'].toString())
@@ -281,7 +312,6 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
 
       if (response.statusCode == 200) {
         await _storage.delete(key: 'auth_token');
-        _showGreenSnackBar('Logged out successfully.');
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => SplashScreen()),
@@ -447,6 +477,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
   void initState() {
     super.initState();
     _fetchSpecialistProfile();
+     _fetchSpecialistFeedback();
   }
 
   @override
@@ -636,7 +667,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
                                     return ListTile(
                                       title: Text(
                                         suggestion['display_name'] ??
-                                            'No Name Found', // Add null check
+                                            'No Name Found',
                                       ),
                                     );
                                   },
@@ -664,7 +695,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
                                   value:
                                       _selectedSpecialization == 'null'
                                           ? null
-                                          : _selectedSpecialization, // Corrected value handling
+                                          : _selectedSpecialization,
                                   decoration: const InputDecoration(
                                     labelText: 'Specialization',
                                     labelStyle: TextStyle(color: primaryOrange),
@@ -693,7 +724,6 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
                                   dropdownColor: Colors.white,
                                   items: [
                                     const DropdownMenuItem<String>(
-                                      
                                       value: null,
                                       child: Text('Select Specialization'),
                                     ),
@@ -754,23 +784,40 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                // ..._feedbacks.map(
-                                //   (f) => ListTile(
-                                //     leading: const Icon(
-                                //       Icons.comment,
-                                //       color: Colors.orange,
-                                //     ),
-                                //     title: Align(
-                                //       alignment: Alignment.centerLeft,
-                                //       child: Text(
-                                //         f,
-                                //         style: const TextStyle(
-                                //           color: Colors.black,
-                                //         ),
-                                //       ),
-                                //     ),
-                                //   ),
-                                // ),
+                                // Check if feedback list is empty or not
+                                _specialistFeedbacks.isEmpty
+                                    ? const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Text(
+                                        'No feedback available for this specialist.',
+                                      ),
+                                    )
+                                    : ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: _specialistFeedbacks.length,
+                                      itemBuilder: (context, index) {
+                                        final feedback =
+                                            _specialistFeedbacks[index];
+                                        return ListTile(
+                                          leading: const Icon(
+                                            Icons.comment,
+                                            color: Colors.orange,
+                                          ),
+                                          title: Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(
+                                              feedback['comment'] ??
+                                                  'No comment',
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                 const Divider(),
                                 ListTile(
                                   leading: const Icon(Icons.lock),

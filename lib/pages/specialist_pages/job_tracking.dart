@@ -1,16 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../chat.dart';
 import 'package:intl/intl.dart';
 import '../../constants.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:mime/mime.dart';
-import 'package:path/path.dart' as path;
-import 'package:http_parser/http_parser.dart';
-import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 
 class JobTrackingPage extends StatefulWidget {
@@ -27,7 +21,6 @@ class _JobTrackingState extends State<JobTrackingPage> {
   @override
   void initState() {
     super.initState();
-    _syncCommentAndSpecialistLists();
     _loadExistingProgress();
   }
 
@@ -37,25 +30,16 @@ class _JobTrackingState extends State<JobTrackingPage> {
       _existingProgress = progressData;
     });
     _originalImages.clear();
-    _compressedImages.clear();
     _commentControllers.clear();
     _specialistComments.clear();
     _commentAdded.clear();
 
     for (var item in _existingProgress) {
-      if (item['image_url'] != null) {
-        _originalImages.add(item['image_url']);
-        _compressedImages.add(null);
-        _commentControllers.add(
-          TextEditingController(text: item['user_comment']),
-        );
-        _specialistComments.add(item['specialist_comment'] ?? '');
-        _commentAdded.add(
-          (item['user_comment'] != null && item['user_comment'].isNotEmpty) ||
-              (item['specialist_comment'] != null &&
-                  item['specialist_comment'].isNotEmpty),
-        );
-      }
+      _originalImages.add(item['image_url']);
+
+      _progressIds.add(item['id']);
+
+      _specialistComments.add(item['specialist_comment'] ?? '');
     }
     _syncCommentAndSpecialistLists();
   }
@@ -104,81 +88,13 @@ class _JobTrackingState extends State<JobTrackingPage> {
     }
   }
 
-  Future<void> _uploadProgress(int index) async {
-    final file = _compressedImages[index] ?? _originalImages[index];
-    final comment = _commentControllers[index].text;
-    final reportId = widget.job['id'];
-
-    const storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'auth_token');
-
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User is not authenticated'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final uri = Uri.parse('$baseUrl/reports/$reportId/progress');
-
-    final request =
-        http.MultipartRequest('POST', uri)
-          ..fields['specialist_comment'] =
-              comment // Added the comment to the fields
-          ..headers['Authorization'] = 'Bearer $token';
-
-    final mimeType = lookupMimeType(file.path);
-    final multipartFile = await http.MultipartFile.fromPath(
-      'image',
-      file.path,
-      contentType: mimeType != null ? MediaType.parse(mimeType) : null,
-      filename: path.basename(file.path),
-    );
-
-    request.files.add(multipartFile);
-
-    try {
-      final response = await request.send();
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Progress uploaded successfully!');
-        setState(() {
-          _specialistComments[index] = comment;
-          _commentControllers[index].clear();
-          _commentAdded[index] = true;
-        });
-        _loadExistingProgress(); // Reload progress to reflect updates
-      } else {
-        print('Upload failed: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to upload job progress'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (error) {
-      print('Error uploading progress: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to upload job progress'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   static const Color primaryOrange = Color(0xFFFFA726);
-  final ImagePicker _picker = ImagePicker();
 
   final List<dynamic> _originalImages = [];
-  final List<File?> _compressedImages = [];
   final List<TextEditingController> _commentControllers = [];
   final List<String> _specialistComments = [];
   final List<bool> _commentAdded = [];
+  final List<int> _progressIds = [];
 
   @override
   void didUpdateWidget(covariant JobTrackingPage oldWidget) {
@@ -191,14 +107,12 @@ class _JobTrackingState extends State<JobTrackingPage> {
       _commentControllers.add(TextEditingController());
       _specialistComments.add('');
       _commentAdded.add(false);
-      _compressedImages.add(null);
     }
     while (_commentControllers.length > _originalImages.length) {
       _commentControllers.last.dispose();
       _commentControllers.removeLast();
       _specialistComments.removeLast();
       _commentAdded.removeLast();
-      _compressedImages.removeLast();
     }
   }
 
@@ -211,48 +125,6 @@ class _JobTrackingState extends State<JobTrackingPage> {
   }
 
   bool _isPickingImage = false;
-  Future<void> _pickImage(ImageSource source) async {
-    if (_isPickingImage) return;
-    _isPickingImage = true;
-    final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      final File imageFile = File(pickedFile.path);
-      final img.Image? originalImage = img.decodeImage(
-        await imageFile.readAsBytes(),
-      );
-
-      if (originalImage != null) {
-        img.Image resizedImage = img.copyResize(originalImage, width: 800);
-        List<int> compressedBytes = img.encodeJpg(resizedImage, quality: 70);
-        final Directory tempDir = await getTemporaryDirectory();
-        final File compressedFile =
-            await File(
-              '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
-            ).create();
-        await compressedFile.writeAsBytes(compressedBytes);
-
-        setState(() {
-          _originalImages.add(imageFile);
-          _compressedImages.add(compressedFile);
-          _commentControllers.add(TextEditingController());
-          _specialistComments.add('');
-          _commentAdded.add(false);
-        });
-      } else {
-        _showErrorSnackBar('Failed to decode the image.');
-      }
-    }
-  }
-
-  void _removeImage(int index) {
-    setState(() {
-      _originalImages.removeAt(index);
-      _compressedImages.removeAt(index);
-      _commentControllers.removeAt(index);
-      _specialistComments.removeAt(index);
-      _commentAdded.removeAt(index);
-    });
-  }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -306,107 +178,74 @@ class _JobTrackingState extends State<JobTrackingPage> {
 
   Widget _buildImageGallery() {
     if (_originalImages.isEmpty) {
-      return const Center(child: Text('No progress updates yet.'));
+      return SizedBox(
+        height: MediaQuery.of(context).size.height * 0.5,
+        child: const Center(child: Text('No progress updates yet.')),
+      );
     }
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 20,
+    return Column(
       children:
           _originalImages.asMap().entries.map((entry) {
             final index = entry.key;
             final image = entry.value;
 
             Widget imageWidget;
-            if (image is String) {
+
+            if (image is String && image.isNotEmpty) {
               imageWidget = Image.network(
                 image,
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.width * 0.8,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Icon(Icons.error_outline));
-                },
               );
             } else if (image is File) {
               imageWidget = Image.file(
                 image,
-                width: 100,
-                height: 100,
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.width * 0.8,
                 fit: BoxFit.cover,
               );
             } else {
-              imageWidget = const Center(child: Text('Invalid Image Type'));
+              imageWidget = const Text('No image provided.');
             }
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SizedBox(
-                        width: 100,
-                        height: 100,
-                        child: imageWidget,
-                      ),
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: imageWidget,
+                        ),
+                      ],
                     ),
-                    if (image is File)
-                      Positioned(
-                        right: -10,
-                        top: -10,
-                        child: IconButton(
-                          icon: const Icon(Icons.cancel, color: Colors.red),
-                          onPressed: () => _removeImage(index),
+                    const SizedBox(height: 8),
+                    if (_specialistComments[index].isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue, width: 1),
+                          ),
+                          child: Text(
+                            'Specialist Comment: ${_specialistComments[index]}',
+                            style: const TextStyle(color: Colors.black87),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
+                    if (_commentAdded[index]) const SizedBox(height: 40),
                   ],
                 ),
-                const SizedBox(height: 8),
-                if (_specialistComments[index].isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      ' Comment: ${_specialistComments[index]}',
-                      style: const TextStyle(fontStyle: FontStyle.italic),
-                    ),
-                  ),
-                Row(
-                  children: [
-                    if (!_commentAdded[index]) 
-                      Expanded(
-                        child: TextField(
-                          controller: _commentControllers[index],
-                          decoration: const InputDecoration(
-                            labelText: 'Add your comment',
-                            labelStyle: TextStyle(color: primaryOrange),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: primaryOrange),
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (!_commentAdded[index]) const SizedBox(width: 8),
-                    if (!_commentAdded[index])
-                      ElevatedButton(
-                        onPressed: () => _uploadProgress(index),
-                        child: const Text('Send'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryOrange,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
-                        ),
-                      ),
-                    if (_commentAdded[index]) const SizedBox(width: 80),
-                  ],
-                ),
-              ],
+              ),
             );
           }).toList(),
     );
@@ -454,13 +293,13 @@ class _JobTrackingState extends State<JobTrackingPage> {
             _buildLabel('Description:'),
             Text(job['description'] ?? 'No Description'),
             const SizedBox(height: 20),
+            const Divider(),
             Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly),
             const SizedBox(height: 20),
             if (_originalImages.isNotEmpty) _buildImageGallery(),
             const SizedBox(height: 24),
             const Divider(),
             Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly),
-
             const SizedBox(height: 24),
             Center(
               child: _buildActionButton(
