@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../chat.dart';
 import 'package:intl/intl.dart';
 import '../../constants.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -561,19 +560,6 @@ class _JobProgressPageState extends State<JobProgressPage> {
             ),
 
             const SizedBox(height: 24),
-            Center(
-              child: _buildActionButton(
-                icon: Icons.chat,
-                label: 'Chat',
-                color: primaryOrange,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const Chat()),
-                  );
-                },
-              ),
-            ),
           ],
         ),
       ),

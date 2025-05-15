@@ -1,14 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.repair_app">
 
-    <!-- 👇 Permissions for image picking -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
-    <!-- 👇 Permission for accessing the internet -->
-    <uses-permission android:name="android.permission.INTERNET" /> <!-- Add this line -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="repair_app"

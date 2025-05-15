@@ -153,19 +153,19 @@ class JobPage extends StatelessWidget {
                     }).toList(),
 
                   const SizedBox(height: 12),
-                  Center(
-                    child: _buildActionButton(
-                      icon: Icons.chat,
-                      label: 'Chat',
-                      color: primaryOrange,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const Chat()),
-                        );
-                      },
-                    ),
-                  ),
+                  // Center(
+                  //   child: _buildActionButton(
+                  //     icon: Icons.chat,
+                  //     label: 'Chat',
+                  //     color: primaryOrange,
+                  //     onPressed: () {
+                  //       Navigator.push(
+                  //         context,
+                  //         MaterialPageRoute(builder: (_) => const Chat()),
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
                   const SizedBox(height: 12),
                   const Divider(),
                   Row(

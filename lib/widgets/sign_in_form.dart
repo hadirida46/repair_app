@@ -49,11 +49,11 @@ class _SignInFormState extends State<SignInForm> {
           var responseData = json.decode(response.body);
           String token = responseData['token'];
           String role = responseData['role'];
-
+          String userId = responseData['user_id'].toString();
           final storage = FlutterSecureStorage();
           await storage.write(key: 'auth_token', value: token);
           await storage.write(key: 'user_role', value: role);
-
+          await storage.write(key: 'user_id', value: userId);
           // Debug: confirm it was saved
           String? savedToken = await storage.read(key: 'auth_token');
           print('Token read right after write: $savedToken');

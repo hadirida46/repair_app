@@ -194,7 +194,14 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const Chat()),
+                        MaterialPageRoute(
+                          builder:
+                              (_) => Chat(
+                                receiverId: int.parse(widget.specialist['id']!),
+                                receiverName:
+                                    '${widget.specialist['first_name']} ${widget.specialist['last_name']}',
+                              ),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -205,8 +212,10 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
                       ),
                       elevation: 3,
                     ),
-                    icon: const Icon(Icons.chat_bubble_outline,
-                        color: Colors.white),
+                    icon: const Icon(
+                      Icons.chat_bubble_outline,
+                      color: Colors.white,
+                    ),
                     label: const Text(
                       'Chat',
                       style: TextStyle(color: Colors.white, fontSize: 16),

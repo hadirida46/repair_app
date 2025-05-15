@@ -150,11 +150,8 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
               Text(email, style: TextStyle(color: lightGrey, fontSize: 16)),
             const SizedBox(height: 24),
 
-            // Bio Section
             _buildSection('About', bio, Icons.info_outline),
             const SizedBox(height: 20),
-
-            // Feedback Section
             _sectionTitle('Patient Feedback', Icons.message_outlined),
             const SizedBox(height: 12),
             isLoadingFeedback
@@ -184,7 +181,6 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
                 ),
             const SizedBox(height: 30),
 
-            // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -193,7 +189,14 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const Chat()),
+                        MaterialPageRoute(
+                          builder:
+                              (_) => Chat(
+                                receiverId: int.parse(widget.specialist['id']!),
+                                receiverName:
+                                    '${widget.specialist['first_name']} ${widget.specialist['last_name']}',
+                              ),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(

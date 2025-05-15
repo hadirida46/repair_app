@@ -46,8 +46,6 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
 
   List<dynamic> _specialistFeedbacks = [];
 
-  // --- Helper Methods ---
-
   void _showRedSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -117,7 +115,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
         });
       } else if (response.statusCode == 404) {
         setState(() {
-          _specialistFeedbacks = []; // No feedback found
+          _specialistFeedbacks = [];
           _showRedSnackBar(json.decode(response.body)['message']);
         });
       } else {
@@ -278,7 +276,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
 
       if (response.statusCode == 200) {
         _showGreenSnackBar('Profile updated successfully!');
-        _fetchSpecialistProfile(); // Re-fetch profile data
+        _fetchSpecialistProfile();
       } else {
         _showRedSnackBar('Failed to update profile: ${response.statusCode}');
         debugPrint('Failed to update specialist profile: $responseBody');
@@ -477,7 +475,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
   void initState() {
     super.initState();
     _fetchSpecialistProfile();
-     _fetchSpecialistFeedback();
+    _fetchSpecialistFeedback();
   }
 
   @override
@@ -784,7 +782,6 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                // Check if feedback list is empty or not
                                 _specialistFeedbacks.isEmpty
                                     ? const Padding(
                                       padding: EdgeInsets.all(8.0),

@@ -306,19 +306,19 @@ class _JobTrackingState extends State<JobTrackingPage> {
             const Divider(),
             Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly),
             const SizedBox(height: 24),
-            Center(
-              child: _buildActionButton(
-                icon: Icons.chat,
-                label: 'Chat',
-                color: primaryOrange,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const Chat()),
-                  );
-                },
-              ),
-            ),
+            // Center(
+            //   child: _buildActionButton(
+            //     icon: Icons.chat,
+            //     label: 'Chat',
+            //     color: primaryOrange,
+            //     onPressed: () {
+            //       Navigator.push(
+            //         context,
+            //         MaterialPageRoute(builder: (_) => const Chat()),
+            //       );
+            //     },
+            //   ),
+            // ),
           ],
         ),
       ),

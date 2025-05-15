@@ -37,24 +37,24 @@ class ExpertCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
-          Center(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Chat()),
-                );
-              },
-              child: Text(
-                'Chat',
-                style: TextStyle(
-                  color: primaryOrange,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
+          // Center(
+          //   child: GestureDetector(
+          //     onTap: () {
+          //       Navigator.push(
+          //         context,
+          //         MaterialPageRoute(builder: (context) => const Chat()),
+          //       );
+          //     },
+          //     child: Text(
+          //       'Chat',
+          //       style: TextStyle(
+          //         color: primaryOrange,
+          //         fontSize: 14,
+          //         fontWeight: FontWeight.w600,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
