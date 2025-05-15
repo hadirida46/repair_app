@@ -210,64 +210,6 @@ class _SpecialistHomeState extends State<SpecialistHome> {
                           ),
                         ),
                         const SizedBox(height: 30),
-
-                        const SizedBox(height: 30),
-                        Text(
-                          "Nearby Mates 📍",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: primaryOrange,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Stack(
-                          children: [
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  for (var expert in [
-                                    {'name': 'Ahmad', 'job': 'Plumber'},
-                                    {'name': 'Sara', 'job': 'Electrician'},
-                                    {'name': 'Jad', 'job': 'Engineer'},
-                                    {'name': 'Layla', 'job': 'Architect'},
-                                    {'name': 'Omar', 'job': 'Plumber'},
-                                    {'name': 'Nadia', 'job': 'Electrician'},
-                                  ])
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0,
-                                      ),
-                                      child: ExpertCard(
-                                        imagePath: 'assets/profile_pic.png',
-                                        name: expert['name']!,
-                                        job: expert['job']!,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              top: 10,
-                              child: GestureDetector(
-                                onTap: () {},
-                                child: Container(
-                                  padding: const EdgeInsets.all(8.0),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: primaryOrange,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),

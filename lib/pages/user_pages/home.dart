@@ -39,28 +39,10 @@ class _HomeState extends State<Home> {
     },
   ];
 
-  final List<Map<String, String>> _testimonials = [
-    {
-      'quote':
-          '“Jad fixed my office wall in no time. Super professional and polite.”',
-      'author': '- Rana K.',
-    },
-    {
-      'quote': '“Booking a plumber was so easy! Got help the same day.”',
-      'author': '- Ali H.',
-    },
-    {
-      'quote':
-          '“Really impressed by how fast the electrician arrived and fixed our lights.”',
-      'author': '- Mira S.',
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
     _startAutoScroll();
-    _startTestimonialScroll();
   }
 
   void _startAutoScroll() {
@@ -71,24 +53,6 @@ class _HomeState extends State<Home> {
         });
         _pageController.animateToPage(
           _currentPage,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  void _startTestimonialScroll() {
-    _testimonialTimer = Timer.periodic(const Duration(seconds: 6), (
-      Timer timer,
-    ) {
-      if (_testimonialController.hasClients) {
-        setState(() {
-          _currentTestimonial =
-              (_currentTestimonial + 1) % _testimonials.length;
-        });
-        _testimonialController.animateToPage(
-          _currentTestimonial,
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeInOut,
         );
@@ -241,117 +205,6 @@ class _HomeState extends State<Home> {
                               );
                             },
                           ),
-                        ),
-                        const SizedBox(height: 30),
-                        Text(
-                          "What our users say",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: primaryOrange,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          height: 100,
-                          child: PageView.builder(
-                            controller: _testimonialController,
-                            itemCount: _testimonials.length,
-                            itemBuilder: (context, index) {
-                              final testimonial = _testimonials[index];
-                              return Container(
-                                padding: const EdgeInsets.all(15),
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: primaryOrange.withOpacity(0.4),
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      testimonial['quote']!,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      testimonial['author']!,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        Text(
-                          "Nearby Experts 📍",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: primaryOrange,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Stack(
-                          children: [
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  for (var expert in [
-                                    {'name': 'Ahmad', 'job': 'Plumber'},
-                                    {'name': 'Sara', 'job': 'Electrician'},
-                                    {'name': 'Jad', 'job': 'Engineer'},
-                                    {'name': 'Layla', 'job': 'Architect'},
-                                    {'name': 'Omar', 'job': 'Plumber'},
-                                    {'name': 'Nadia', 'job': 'Electrician'},
-                                  ])
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0,
-                                      ),
-                                      child: ExpertCard(
-                                        imagePath: 'assets/profile_pic.png',
-                                        name: expert['name']!,
-                                        job: expert['job']!,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              top: 10,
-                              child: GestureDetector(
-                                onTap: () {
-                                  // Scroll action could be added here if needed
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(8.0),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: primaryOrange,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ],
                     ),
