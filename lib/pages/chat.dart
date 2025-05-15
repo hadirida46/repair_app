@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../../constants.dart';
+import 'dart:async';
 
 class Chat extends StatefulWidget {
   final int receiverId;
@@ -15,13 +16,23 @@ class Chat extends StatefulWidget {
 }
 
 class _ChatState extends State<Chat> {
+  Timer? _pollingTimer;
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!_isLoading) {
+        _fetchMessages();
+      }
+    });
+  }
+
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   List<Map<String, String>> _messages = [];
   int? _senderId;
-  bool _isLoading = true; // Add a loading state
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -29,7 +40,7 @@ class _ChatState extends State<Chat> {
     _loadSenderId();
   }
 
-    Future<void> _loadSenderId() async {
+  Future<void> _loadSenderId() async {
     print('ChatScreen _loadSenderId called');
     final id = await _storage.read(key: 'user_id');
     if (id != null) {
@@ -39,18 +50,14 @@ class _ChatState extends State<Chat> {
           _senderId = parsedId;
         });
         await _fetchMessages();
-      } else {
-        setState(() {
-          _isLoading = false; 
-        });
-        print('Error parsing user ID');
+        _startPolling();
+        return;
       }
-    } else {
-      setState(() {
-        _isLoading = false; 
-      });
-      print('User ID not found in secure storage');
     }
+    setState(() {
+      _isLoading = false;
+    });
+    print('Error loading sender ID');
   }
 
   Future<void> _fetchMessages() async {
@@ -70,19 +77,23 @@ class _ChatState extends State<Chat> {
       );
 
       if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body) as List; 
+        final List data = jsonDecode(response.body) as List;
 
         setState(() {
-          _messages = data.map<Map<String, String>>((msg) {
-            return {
-              'sender': msg['sender_id'].toString() == _senderId.toString()
-                  ? 'User'
-                  : 'Other',
-              'text': msg['message'] as String? ?? '', // Handle potential null
-              'timestamp': (msg['created_at'] as String?)?.substring(11, 16) ?? '', // Handle potential null
-            };
-          }).toList();
-          _isLoading = false; 
+          _messages =
+              data.map<Map<String, String>>((msg) {
+                final int senderIdFromMessage = msg['sender_id'];
+                final bool isCurrentUser =
+                    _senderId != null && senderIdFromMessage == _senderId;
+                return {
+                  'sender': isCurrentUser ? 'User' : 'Other',
+                  'text': msg['message'] ?? '',
+                  'timestamp':
+                      (msg['created_at'] as String?)?.substring(11, 16) ?? '',
+                };
+              }).toList();
+
+          _isLoading = false;
         });
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -90,40 +101,44 @@ class _ChatState extends State<Chat> {
         });
       } else {
         setState(() {
-          _isLoading = false; // Set loading to false on error
+          _isLoading = false;
         });
-        print('Failed to fetch messages: ${response.statusCode}, body: ${response.body}');
+        print(
+          'Failed to fetch messages: ${response.statusCode}, body: ${response.body}',
+        );
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load messages: ${response.statusCode}')),
+          SnackBar(
+            content: Text('Failed to load messages: ${response.statusCode}'),
+          ),
         );
       }
     } catch (e) {
       setState(() {
-        _isLoading = false; // Set loading to false on error
+        _isLoading = false;
       });
       print('Error fetching messages: $e');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading messages: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading messages: $e')));
     }
   }
-   @override
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     print('ChatScreen didChangeDependencies called');
-    // Check if _senderId is null and try to load it again
     if (_senderId == null && !_isLoading) {
       setState(() {
-        _isLoading = true; // Avoid multiple loading triggers
+        _isLoading = true;
       });
       _loadSenderId();
     } else if (_senderId != null && _messages.isEmpty && !_isLoading) {
-      // If sender ID is available and messages are empty, fetch again
       setState(() {
         _isLoading = true;
       });
       _fetchMessages();
     }
   }
-
 
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
@@ -150,7 +165,9 @@ class _ChatState extends State<Chat> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send message: ${response.statusCode}, body: ${response.body}'),
+            content: Text(
+              'Failed to send message: ${response.statusCode}, body: ${response.body}',
+            ),
           ),
         );
       }
@@ -190,24 +207,27 @@ class _ChatState extends State<Chat> {
       body: Column(
         children: [
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator()) // Show loading indicator
-                : _messages.isEmpty
+            child:
+                _isLoading
                     ? const Center(
-                        child: Text(
-                          "No messages yet.",
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, index) {
-                          final message = _messages[index];
-                          return _buildMessageBubble(message);
-                        },
+                      child: CircularProgressIndicator(),
+                    ) // Show loading indicator
+                    : _messages.isEmpty
+                    ? const Center(
+                      child: Text(
+                        "No messages yet.",
+                        style: TextStyle(color: Colors.black54),
                       ),
+                    )
+                    : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final message = _messages[index];
+                        return _buildMessageBubble(message);
+                      },
+                    ),
           ),
           _buildMessageInput(),
         ],
