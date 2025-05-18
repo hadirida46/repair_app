@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '/widgets/custom_appbar.dart';
-import '/widgets/expert_card.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../constants.dart';
-import 'package:http/http.dart' as http;
+import '../chat.dart';
 
 const Color primaryOrange = Color(0xFFFF9800);
 
@@ -210,6 +207,58 @@ class _SpecialistHomeState extends State<SpecialistHome> {
                           ),
                         ),
                         const SizedBox(height: 30),
+                        Text(
+                          "Contact Us",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: primaryOrange,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(Icons.email, color: primaryOrange),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '12133640@students.liu.edu.lb',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const Chat(
+                                      receiverId: 3,
+                                      receiverName: 'Support',
+                                    ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.chat),
+                          label: const Text("Chat with Support"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryOrange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

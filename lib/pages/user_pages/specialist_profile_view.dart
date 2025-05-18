@@ -51,7 +51,7 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
       final List<dynamic> feedbackJson =
           json.decode(response.body)['feedbacks'];
       setState(() {
-        feedbacks = feedbackJson.map((f) => f['comment'] as String).toList();
+        feedbacks = feedbackJson.map((f) => f['feedback'] as String).toList();
         isLoadingFeedback = false;
       });
     } else {
@@ -72,14 +72,14 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
     final String? bio = widget.specialist['bio'];
 
     return Scaffold(
-      backgroundColor: Colors.grey[200], 
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         title: Text(
-          specialty, 
+          specialty,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: Colors.indigo[900], 
+        backgroundColor: Colors.indigo[900],
         foregroundColor: Colors.white,
         elevation: 2, // Subtle shadow
         bottom: PreferredSize(
@@ -120,36 +120,34 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
                 radius: 70,
                 backgroundColor: lightGrey,
                 child: ClipOval(
-                  child: profileImage != null && profileImage.isNotEmpty
-                      ? Image.network(
-                        profileImage,
-                        fit: BoxFit.cover,
-                        width: 140,
-                        height: 140,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
+                  child:
+                      profileImage != null && profileImage.isNotEmpty
+                          ? Image.network(
+                            profileImage,
+                            fit: BoxFit.cover,
+                            width: 140,
+                            height: 140,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Image.asset(
+                                'assets/profile_pic.png',
+                                fit: BoxFit.cover,
+                                width: 140,
+                                height: 140,
+                              );
+                            },
+                          )
+                          : Image.asset(
                             'assets/profile_pic.png',
                             fit: BoxFit.cover,
                             width: 140,
                             height: 140,
-                          );
-                        },
-                      )
-                      : Image.asset(
-                        'assets/profile_pic.png',
-                        fit: BoxFit.cover,
-                        width: 140,
-                        height: 140,
-                      ),
+                          ),
                 ),
               ),
             ),
             const SizedBox(height: 12),
             if (email.isNotEmpty)
-              Text(
-                email,
-                style: TextStyle(color: lightGrey, fontSize: 16),
-              ),
+              Text(email, style: TextStyle(color: lightGrey, fontSize: 16)),
             const SizedBox(height: 24),
 
             // Bio Section
@@ -162,27 +160,28 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
             isLoadingFeedback
                 ? const Center(child: CircularProgressIndicator())
                 : feedbacks.isEmpty
-                    ? const Text(
-                      'No feedback available yet.',
-                      style: TextStyle(color: lightGrey),
-                      textAlign: TextAlign.center,
-                    )
-                    : ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: feedbacks.length,
-                      separatorBuilder: (context, index) =>
+                ? const Text(
+                  'No feedback available yet.',
+                  style: TextStyle(color: lightGrey),
+                  textAlign: TextAlign.center,
+                )
+                : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: feedbacks.length,
+                  separatorBuilder:
+                      (context, index) =>
                           const Divider(indent: 10, endIndent: 10),
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Text(
-                            feedbacks[index],
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        );
-                      },
-                    ),
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        feedbacks[index],
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    );
+                  },
+                ),
             const SizedBox(height: 30),
 
             // Action Buttons
@@ -249,8 +248,9 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
                           'Authorization': 'Bearer $token',
                           'Content-Type': 'application/json',
                         },
-                        body:
-                            json.encode({'specialist_id': int.parse(specialistId)}),
+                        body: json.encode({
+                          'specialist_id': int.parse(specialistId),
+                        }),
                       );
 
                       if (response.statusCode == 200) {
@@ -284,8 +284,10 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
                       ),
                       elevation: 3,
                     ),
-                    icon: const Icon(Icons.check_circle_outline,
-                        color: Colors.white),
+                    icon: const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.white,
+                    ),
                     label: const Text(
                       'Select',
                       style: TextStyle(

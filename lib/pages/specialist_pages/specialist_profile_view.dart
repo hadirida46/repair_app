@@ -51,7 +51,7 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
       final List<dynamic> feedbackJson =
           json.decode(response.body)['feedbacks'];
       setState(() {
-        feedbacks = feedbackJson.map((f) => f['comment'] as String).toList();
+        feedbacks = feedbackJson.map((f) => f['feedback '] as String).toList();
         isLoadingFeedback = false;
       });
     } else {

@@ -805,7 +805,7 @@ class _SpecialistProfileState extends State<SpecialistProfile> {
                                           title: Align(
                                             alignment: Alignment.centerLeft,
                                             child: Text(
-                                              feedback['comment'] ??
+                                              feedback['feedback'] ??
                                                   'No comment',
                                               style: const TextStyle(
                                                 color: Colors.black,
