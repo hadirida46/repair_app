@@ -10,7 +10,7 @@ class SignIn extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          CustomAppBar(title: 'Repair Link'),
+          CustomAppBar(title: 'Repair App'),
 
           SliverList(
             delegate: SliverChildListDelegate([
