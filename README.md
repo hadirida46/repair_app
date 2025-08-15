@@ -10,10 +10,19 @@ It communicates with a **Laravel API backend** for authentication, order managem
 - **User Authentication** — Sign up, log in, log out (via Laravel Sanctum API).
 - **Profile Management** — Update personal details, change password, upload profile picture.
 - **Location Autocomplete** — Search and select addresses with coordinates using **OpenStreetMap (Nominatim API)**.
-- **Damage Reporting** — Create reports with:
+- **Damage Reporting & Status Workflow** — Create repair reports with:
   - Damage description
   - Photo uploads
   - Location on map
+  - Reports go through these statuses:
+    - `waiting` — Report created, waiting for specialist response.
+    - `accepted` — Specialist accepted the job.
+    - `rejected` — Specialist declined the job.
+    - `escalated` — Sent to another specialist for handling.
+    - `inprogress` — Job currently being worked on.
+    - `completed` — Job finished by specialist.
+  - Users can delete reports if they are in the stage of waiting, rejected or escalated.
+- **Feedback System** — Once a report is marked as `completed`, the user can submit feedback about the specialist, so the specialist and other user's can see.
 - **Job Tracking** — View progress updates with images and comments from specialists.
 - **Messaging System** — Chat with specialists in real-time.
 - **Account Management** — Delete account or log out at any time.
@@ -23,7 +32,6 @@ It communicates with a **Laravel API backend** for authentication, order managem
 ## 🛠️ Tech Stack
 
 - **Frontend Framework:** Flutter (Dart)
-- **State Management:** setState / FutureBuilder (or your choice if using Provider, Riverpod, etc.)
 - **Map & Location:** OpenStreetMap + Nominatim API
 - **Backend API:** Laravel (via HTTPS requests)
 - **Image Handling:** Multipart requests for file uploads
