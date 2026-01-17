@@ -3,9 +3,9 @@ import '/widgets/custom_text_field.dart';
 import '/pages/sign_up.dart';
 import '../pages/user_pages/main_page.dart';
 import '../pages/specialist_pages/main_page.dart';
-import 'dart:convert'; // For encoding the data
-import 'package:http/http.dart' as http; // For making HTTP requests
-import '../constants.dart'; // To access baseUrl
+import 'dart:convert'; 
+import 'package:http/http.dart' as http;
+import '../constants.dart'; 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SignInForm extends StatefulWidget {
@@ -179,7 +179,6 @@ class _SignInFormState extends State<SignInForm> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Small text with Sign Up link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

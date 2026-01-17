@@ -51,7 +51,7 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
       final List<dynamic> feedbackJson =
           json.decode(response.body)['feedbacks'];
       setState(() {
-        feedbacks = feedbackJson.map((f) => f['feedback '] as String).toList();
+        feedbacks = feedbackJson.map((f) => f['feedback'] as String).toList();
         isLoadingFeedback = false;
       });
     } else {
@@ -150,8 +150,11 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
               Text(email, style: TextStyle(color: lightGrey, fontSize: 16)),
             const SizedBox(height: 24),
 
+            // Bio Section
             _buildSection('About', bio, Icons.info_outline),
             const SizedBox(height: 20),
+
+            // Feedback Section
             _sectionTitle('Patient Feedback', Icons.message_outlined),
             const SizedBox(height: 12),
             isLoadingFeedback
@@ -181,6 +184,7 @@ class _SpecialistProfileViewState extends State<SpecialistProfileView> {
                 ),
             const SizedBox(height: 30),
 
+            // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
