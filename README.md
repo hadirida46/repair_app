@@ -35,3 +35,9 @@ It communicates with a **Laravel API backend** for authentication, order managem
 - **Map & Location:** OpenStreetMap + Nominatim API
 - **Backend API:** Laravel (via HTTPS requests)
 - **Image Handling:** Multipart requests for file uploads
+
+## 📄 Project Report
+
+⬇️ **[Download Project Report (PDF)](https://github.com/hadirida46/repair_app/raw/master/Repair_APP_Report.pdf)**  
+> Note: The report will download automatically when clicked.
+
